@@ -1,39 +1,18 @@
 /**
- * testApi.js
- *
- * 역할: 백엔드 /api/analyze 엔드포인트를 자동으로 테스트한다.
- *
- * 테스트 케이스:
- *   1. 정상 요청  — 실제 이미지 파일 전송
- *   2. 파일 없음  — 400 에러 확인
- *   3. 잘못된 형식 — PDF 전송 → 400 에러 확인
- *   4. 파일 크기 초과 — 11MB 더미 데이터 → 400 에러 확인
- *   5. 카테고리 순환 — 5가지 Mock 카테고리 전부 응답 구조 확인
+ * testApi.js — UXAudit 백엔드 API 자동 테스트
  *
  * 실행 방법:
- *   # 1) 백엔드를 Mock 모드로 실행 (터미널 1)
- *   USE_MOCK_AI=true npm run dev
- *
- *   # 2) 테스트 실행 (터미널 2)
- *   node test/testApi.js
- *
- * 의존성: axios, form-data (이미 package.json에 있음)
+ *   터미널 1: npm run dev:mock
+ *   터미널 2: npm run test:api
  */
 
 const axios = require('axios');
 const FormData = require('form-data');
-const fs = require('fs');
-const path = require('path');
 
 const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
 const ENDPOINT = `${BASE_URL}/api/analyze`;
 
-// ─────────────────────────────────────────────
-// 헬퍼
-// ─────────────────────────────────────────────
-
-// 테스트용 최소 PNG (1x1 빨간 픽셀)
-// 실제 이미지 파일이 없어도 테스트 가능하도록 Base64 인라인 포함
+// 테스트용 최소 PNG (1x1 픽셀)
 const TINY_PNG_B64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
 const TINY_PNG_BUF = Buffer.from(TINY_PNG_B64, 'base64');
@@ -41,160 +20,165 @@ const TINY_PNG_BUF = Buffer.from(TINY_PNG_B64, 'base64');
 let passed = 0;
 let failed = 0;
 
-function ok(name) {
-  console.log(`  ✅ PASS  ${name}`);
-  passed++;
-}
-
-function fail(name, reason) {
-  console.log(`  ❌ FAIL  ${name}`);
-  console.log(`         → ${reason}`);
-  failed++;
-}
+function ok(name)         { console.log(`  ✅ PASS  ${name}`); passed++; }
+function fail(name, msg)  { console.log(`  ❌ FAIL  ${name}\n         → ${msg}`); failed++; }
 
 async function run(name, fn) {
-  try {
-    await fn();
-  } catch (e) {
-    fail(name, e.message);
-  }
+  try { await fn(); }
+  catch (e) { fail(name, e.message); }
 }
 
 // ─────────────────────────────────────────────
-// 공통 응답 구조 검사
-// 프론트엔드가 기대하는 필드를 모두 확인한다.
+// 프론트 스펙 기준 필드 검사
 // ─────────────────────────────────────────────
-const REQUIRED_REPORT_FIELDS = [
+const REQUIRED_FIELDS = [
   'category',
   'categoryLabel',
-  'riskScore',
+  'overallRiskScore',       // 구: riskScore
   'riskLevel',
-  'message',
-  'patterns',
-  'ocrPatterns',
-  'crossPatterns',
+  'summary',                // 신규
+  'totalDetected',          // 신규
+  'detectedPatterns',       // 구: ocrPatterns
+  'guidelineCompliance',    // 구: guidelineRef (배열)
   'suggestions',
   'ocr',
   'confidence',
   'analyzedAt',
 ];
 
-function assertReportShape(report, testName) {
-  for (const field of REQUIRED_REPORT_FIELDS) {
-    if (report[field] === undefined) {
-      throw new Error(`리포트에 '${field}' 필드가 없습니다.`);
-    }
+function assertReportShape(report) {
+  // 필수 필드 존재 확인
+  for (const field of REQUIRED_FIELDS) {
+    if (report[field] === undefined) throw new Error(`'${field}' 필드 없음`);
   }
 
-  if (typeof report.riskScore !== 'number' || report.riskScore < 0 || report.riskScore > 100) {
-    throw new Error(`riskScore 범위 오류: ${report.riskScore}`);
-  }
+  // 타입 및 범위 확인
+  if (typeof report.overallRiskScore !== 'number' || report.overallRiskScore < 0 || report.overallRiskScore > 100)
+    throw new Error(`overallRiskScore 범위 오류: ${report.overallRiskScore}`);
 
   const validLevels = ['SAFE', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  if (!validLevels.includes(report.riskLevel)) {
+  if (!validLevels.includes(report.riskLevel))
     throw new Error(`riskLevel 값 오류: ${report.riskLevel}`);
-  }
 
   const validCategories = ['NORMAL', 'MISLEADING', 'OBSTRUCTING', 'PRESSURING', 'EXPLOITING'];
-  if (!validCategories.includes(report.category)) {
+  if (!validCategories.includes(report.category))
     throw new Error(`category 값 오류: ${report.category}`);
+
+  // 프론트 CATEGORY_CONFIG label 일치 확인
+  const validLabels = ['정상', '오도형', '방해형', '압박형', '편취유도형'];
+  if (!validLabels.includes(report.categoryLabel))
+    throw new Error(`categoryLabel 값 오류: ${report.categoryLabel}`);
+
+  if (!Array.isArray(report.detectedPatterns))
+    throw new Error('detectedPatterns가 배열이 아님');
+
+  if (!Array.isArray(report.guidelineCompliance))
+    throw new Error('guidelineCompliance가 배열이 아님');
+
+  // guidelineCompliance 구조 확인
+  for (const g of report.guidelineCompliance) {
+    if (typeof g.isCompliant !== 'boolean')
+      throw new Error(`guidelineCompliance.isCompliant가 boolean이 아님`);
+    if (!g.category || !g.details)
+      throw new Error(`guidelineCompliance 필드 누락`);
   }
 
-  if (!Array.isArray(report.patterns)) throw new Error('patterns가 배열이 아닙니다.');
-  if (!Array.isArray(report.ocrPatterns)) throw new Error('ocrPatterns가 배열이 아닙니다.');
-  if (!Array.isArray(report.crossPatterns)) throw new Error('crossPatterns가 배열이 아닙니다.');
-  if (!Array.isArray(report.suggestions)) throw new Error('suggestions가 배열이 아닙니다.');
+  if (typeof report.totalDetected !== 'number')
+    throw new Error('totalDetected가 숫자가 아님');
 
-  if (typeof report.ocr !== 'object' || report.ocr === null) {
-    throw new Error('ocr 필드가 객체가 아닙니다.');
-  }
+  if (report.totalDetected !== report.detectedPatterns.length)
+    throw new Error(`totalDetected(${report.totalDetected}) ≠ detectedPatterns.length(${report.detectedPatterns.length})`);
 }
 
 // ─────────────────────────────────────────────
 // 테스트 케이스
 // ─────────────────────────────────────────────
 
-async function test1_normalRequest() {
-  const name = 'TC-01 | 정상 요청 (PNG 이미지)';
+async function test_health() {
+  const name = 'TC-01 | /health 응답 확인';
+  await run(name, async () => {
+    const res = await axios.get(`${BASE_URL}/health`);
+    if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+    ok(name);
+  });
+}
+
+async function test_normalRequest() {
+  const name = 'TC-02 | 정상 요청 — 프론트 스펙 필드 전체 확인';
   await run(name, async () => {
     const form = new FormData();
     form.append('image', TINY_PNG_BUF, { filename: 'test.png', contentType: 'image/png' });
 
     const res = await axios.post(ENDPOINT, form, { headers: form.getHeaders() });
-
     if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-    if (!res.data.report) throw new Error('응답에 report 필드가 없습니다.');
+    if (!res.data.report) throw new Error('report 필드 없음');
 
-    assertReportShape(res.data.report, name);
+    assertReportShape(res.data.report);
     ok(name);
-    console.log(`         category=${res.data.report.category}  riskScore=${res.data.report.riskScore}  riskLevel=${res.data.report.riskLevel}`);
+
+    const r = res.data.report;
+    console.log(`         category=${r.category}  categoryLabel=${r.categoryLabel}`);
+    console.log(`         overallRiskScore=${r.overallRiskScore}  riskLevel=${r.riskLevel}`);
+    console.log(`         totalDetected=${r.totalDetected}  detectedPatterns=${r.detectedPatterns.length}개`);
+    console.log(`         guidelineCompliance=${r.guidelineCompliance.length}개 항목`);
   });
 }
 
-async function test2_noFile() {
-  const name = 'TC-02 | 파일 없음 → 400';
+async function test_noFile() {
+  const name = 'TC-03 | 파일 없음 → 400';
   await run(name, async () => {
     try {
       await axios.post(ENDPOINT, {}, { headers: { 'Content-Type': 'application/json' } });
-      fail(name, '400이 반환되어야 하는데 성공했습니다.');
+      throw new Error('400이 반환되어야 함');
     } catch (err) {
-      if (err.response?.status === 400) {
-        ok(name);
-      } else {
-        throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
-      }
+      if (err.response?.status === 400) ok(name);
+      else throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
     }
   });
 }
 
-async function test3_wrongMimeType() {
-  const name = 'TC-03 | 잘못된 파일 형식(PDF) → 400';
+async function test_wrongMimeType() {
+  const name = 'TC-04 | 잘못된 형식(PDF) → 400';
   await run(name, async () => {
-    const fakePdf = Buffer.from('%PDF-1.4 fake content');
     const form = new FormData();
-    form.append('image', fakePdf, { filename: 'doc.pdf', contentType: 'application/pdf' });
-
+    form.append('image', Buffer.from('%PDF-1.4'), { filename: 'doc.pdf', contentType: 'application/pdf' });
     try {
       await axios.post(ENDPOINT, form, { headers: form.getHeaders() });
-      fail(name, '400이 반환되어야 하는데 성공했습니다.');
+      throw new Error('400이 반환되어야 함');
     } catch (err) {
-      if (err.response?.status === 400) {
-        ok(name);
-      } else {
-        throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
-      }
+      if (err.response?.status === 400) ok(name);
+      else throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
     }
   });
 }
 
-async function test4_fileTooLarge() {
-  const name = 'TC-04 | 파일 크기 초과(11MB) → 400';
+async function test_fileTooLarge() {
+  const name = 'TC-05 | 파일 크기 초과(11MB) → 400';
   await run(name, async () => {
-    const bigBuffer = Buffer.alloc(11 * 1024 * 1024, 0); // 11MB 0-filled
     const form = new FormData();
-    form.append('image', bigBuffer, { filename: 'big.png', contentType: 'image/png' });
-
+    form.append('image', Buffer.alloc(11 * 1024 * 1024), { filename: 'big.png', contentType: 'image/png' });
     try {
       await axios.post(ENDPOINT, form, { headers: form.getHeaders() });
-      fail(name, '400이 반환되어야 하는데 성공했습니다.');
+      throw new Error('400이 반환되어야 함');
     } catch (err) {
-      if (err.response?.status === 400) {
-        ok(name);
-      } else {
-        throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
-      }
+      if (err.response?.status === 400) ok(name);
+      else throw new Error(`예상 400, 실제 ${err.response?.status ?? err.message}`);
     }
   });
 }
 
-async function test5_allCategories() {
+async function test_allCategories() {
   const categories = ['NORMAL', 'MISLEADING', 'OBSTRUCTING', 'PRESSURING', 'EXPLOITING'];
+  const expectedLabels = {
+    NORMAL: '정상', MISLEADING: '오도형', OBSTRUCTING: '방해형',
+    PRESSURING: '압박형', EXPLOITING: '편취유도형',
+  };
 
   console.log('\n  [Mock 라운드로빈] 5개 카테고리 순환 확인...');
 
   for (let i = 0; i < categories.length; i++) {
     const expected = categories[i];
-    const name = `TC-05-${i + 1} | Mock 카테고리 ${expected}`;
+    const name = `TC-06-${i + 1} | Mock 카테고리 ${expected} (label: ${expectedLabels[expected]})`;
     await run(name, async () => {
       const form = new FormData();
       form.append('image', TINY_PNG_BUF, { filename: 'test.png', contentType: 'image/png' });
@@ -202,60 +186,49 @@ async function test5_allCategories() {
       const res = await axios.post(ENDPOINT, form, { headers: form.getHeaders() });
       const report = res.data.report;
 
-      assertReportShape(report, name);
+      assertReportShape(report);
 
-      if (report.category !== expected) {
-        throw new Error(`카테고리 불일치: 예상=${expected}, 실제=${report.category}`);
-      }
+      if (report.category !== expected)
+        throw new Error(`category 불일치: 예상=${expected}, 실제=${report.category}`);
+
+      if (report.categoryLabel !== expectedLabels[expected])
+        throw new Error(`categoryLabel 불일치: 예상=${expectedLabels[expected]}, 실제=${report.categoryLabel}`);
+
       ok(name);
-      console.log(`         riskScore=${report.riskScore}  riskLevel=${report.riskLevel}  ocrPatterns=${report.ocrPatterns.length}개`);
+      console.log(`         overallRiskScore=${report.overallRiskScore}  totalDetected=${report.totalDetected}  summary="${report.summary.slice(0, 30)}..."`);
     });
   }
-}
-
-async function test6_healthCheck() {
-  const name = 'TC-06 | /health 응답 확인';
-  await run(name, async () => {
-    const res = await axios.get(`${BASE_URL}/health`);
-    if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-    if (!res.data.status) throw new Error('status 필드 없음');
-    ok(name);
-  });
 }
 
 // ─────────────────────────────────────────────
 // 실행
 // ─────────────────────────────────────────────
-
 (async () => {
-  console.log('='.repeat(55));
-  console.log('  UXAudit 백엔드 API 테스트');
+  console.log('='.repeat(60));
+  console.log('  UXAudit 백엔드 API 테스트 (프론트 스펙 기준)');
   console.log(`  대상: ${ENDPOINT}`);
-  console.log('='.repeat(55));
+  console.log('='.repeat(60));
   console.log();
 
-  // 서버 연결 확인
   try {
     await axios.get(`${BASE_URL}/health`, { timeout: 3000 });
   } catch {
-    console.error('❌ 서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.');
-    console.error(`   USE_MOCK_AI=true npm run dev`);
+    console.error('❌ 서버 연결 불가. 먼저 실행하세요: npm run dev:mock');
     process.exit(1);
   }
 
-  await test6_healthCheck();
+  await test_health();
   console.log();
-  await test1_normalRequest();
+  await test_normalRequest();
   console.log();
-  await test2_noFile();
-  await test3_wrongMimeType();
-  await test4_fileTooLarge();
-  await test5_allCategories();
+  await test_noFile();
+  await test_wrongMimeType();
+  await test_fileTooLarge();
+  await test_allCategories();
 
   console.log();
-  console.log('='.repeat(55));
+  console.log('='.repeat(60));
   console.log(`  결과: ${passed}개 통과 / ${failed}개 실패`);
-  console.log('='.repeat(55));
-
+  console.log('='.repeat(60));
   process.exit(failed > 0 ? 1 : 0);
 })();

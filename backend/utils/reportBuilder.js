@@ -1,50 +1,37 @@
 /**
  * reportBuilder.js
  *
- * 역할: AI 분류 결과 + OCR 패턴 규칙 결과를 통합하여 최종 UXAudit 리포트를 생성한다.
+ * 프론트 스펙(patternTypes.ts)에 맞춰 리포트 구조를 생성한다.
  *
- * 통합 로직 요약:
- *   1. AI 카테고리로 기본 메타(label, message, suggestions)를 결정한다.
- *   2. OCR 텍스트에 patternRules를 적용하여 텍스트 기반 패턴을 추가로 발견한다.
- *   3. OCR이 AI와 다른 카테고리를 탐지했다면 crossPatterns로 별도 표시한다.
- *   4. OCR 가산점(weight 합산)으로 최종 risk_score를 보정한다.
- *
- * 최종 리포트 구조:
- *   {
- *     category, categoryLabel,
- *     riskScore,       // AI 점수 + OCR 가산점 (상한 100)
- *     riskLevel,       // SAFE | MEDIUM | HIGH | CRITICAL
- *     message,
- *     guidelineRef,
- *     patterns,        // AI 기반 패턴 설명
- *     ocrPatterns,     // OCR 규칙 매칭 결과 (같은 카테고리)
- *     crossPatterns,   // OCR 규칙 매칭 결과 (다른 카테고리 — 복합 다크패턴)
- *     suggestions,
- *     ocr: { text, confidence, success },
- *     confidence,
- *     analyzedAt,
- *   }
+ * 변경 이력:
+ *   - riskScore          → overallRiskScore
+ *   - ocrPatterns        → detectedPatterns  (프론트 detectedPatterns 구조 준수)
+ *   - guidelineRef       → guidelineCompliance (배열 형태)
+ *   - categoryLabel      → 프론트 label과 동일하게 통일
+ *   - totalDetected      추가 (detectedPatterns.length)
+ *   - summary            추가 (message 재활용)
  */
 
 const { matchRules, calcWeightByCategory } = require('./patternRules');
 
 // ─────────────────────────────────────────────
-// 카테고리 메타 정의
+// 카테고리 메타
+// 프론트 CATEGORY_CONFIG label과 완전히 동일하게 맞춤
 // ─────────────────────────────────────────────
 const CATEGORY_META = {
   NORMAL: {
     label: '정상',
     riskLevel: 'SAFE',
     message: '다크패턴이 탐지되지 않았습니다.',
-    guidelineRef: null,
+    guidelineCategory: null,
     patterns: [],
     suggestions: [],
   },
   MISLEADING: {
-    label: '오인 유도형',
+    label: '오도형',                           // 프론트 CATEGORY_CONFIG와 동일
     riskLevel: 'MEDIUM',
-    message: '사용자가 잘못된 정보로 의사결정을 유도받을 수 있습니다.',
-    guidelineRef: '금융위원회 가이드라인 범주 1',
+    message: '거짓 또는 왜곡된 정보로 소비자를 오도하는 행위가 탐지됐습니다.',
+    guidelineCategory: '금융위원회 가이드라인 범주 1 — 오도형',
     patterns: [
       '중요 정보 작은 글씨 처리',
       '유리한 조건 강조 / 불리한 조건 숨김',
@@ -56,10 +43,10 @@ const CATEGORY_META = {
     ],
   },
   OBSTRUCTING: {
-    label: '권리 행사 방해형',
+    label: '방해형',                           // 프론트 CATEGORY_CONFIG와 동일
     riskLevel: 'HIGH',
-    message: '사용자의 해지·탈퇴·취소 권리 행사를 방해합니다.',
-    guidelineRef: '금융위원회 가이드라인 범주 2',
+    message: '소비자의 취소·해지 등 권리 행사를 방해하는 행위가 탐지됐습니다.',
+    guidelineCategory: '금융위원회 가이드라인 범주 2 — 방해형',
     patterns: [
       '해지·취소 버튼 숨김 또는 비활성화',
       '불필요한 추가 인증 단계 삽입',
@@ -71,10 +58,10 @@ const CATEGORY_META = {
     ],
   },
   PRESSURING: {
-    label: '심리적 압박형',
+    label: '압박형',                           // 프론트 CATEGORY_CONFIG와 동일
     riskLevel: 'HIGH',
-    message: '인위적인 긴박감으로 사용자의 합리적 판단을 방해합니다.',
-    guidelineRef: '금융위원회 가이드라인 범주 3',
+    message: '심리적 압박을 통해 소비자의 판단을 흐리는 행위가 탐지됐습니다.',
+    guidelineCategory: '금융위원회 가이드라인 범주 3 — 압박형',
     patterns: [
       '가짜 카운트다운 타이머',
       '허위 재고·잔여 수량 표시',
@@ -86,10 +73,10 @@ const CATEGORY_META = {
     ],
   },
   EXPLOITING: {
-    label: '취약층 이용형',
+    label: '편취유도형',                       // 프론트 CATEGORY_CONFIG와 동일
     riskLevel: 'CRITICAL',
-    message: '노인·금융 취약계층의 인지적 한계를 이용합니다.',
-    guidelineRef: '금융위원회 가이드라인 범주 4',
+    message: '가격 정보를 순차적으로 공개하여 비용을 숨기는 행위가 탐지됐습니다.',
+    guidelineCategory: '금융위원회 가이드라인 범주 4 — 편취유도형',
     patterns: [
       '고령자 대상 복잡한 UI 구조',
       '기본값(Pre-check) 활용 추가 동의 수집',
@@ -101,6 +88,9 @@ const CATEGORY_META = {
     ],
   },
 };
+
+// 전체 카테고리 목록 (guidelineCompliance 배열 생성용)
+const ALL_CATEGORIES = ['MISLEADING', 'OBSTRUCTING', 'PRESSURING', 'EXPLOITING'];
 
 const RISK_LEVEL_SCORE = {
   SAFE: 0,
@@ -116,86 +106,123 @@ const RISK_ORDER = ['SAFE', 'MEDIUM', 'HIGH', 'CRITICAL'];
 // ─────────────────────────────────────────────
 
 /**
- * AI 결과 + OCR 결과를 통합하여 최종 리포트 생성
- *
  * @param {{
  *   aiResult: { category: string, risk_score: number, confidence: number },
- *   ocrResult: { text: string, lines: string[], confidence: number, success: boolean }
+ *   ocrResult: { text: string, lines: string[], confidence: number, success: boolean },
+ *   imageMeta?: { id: string, fileName: string, pageLabel: string }
  * }} input
- * @returns {ReportObject}
  */
-function buildReport({ aiResult, ocrResult }) {
+function buildReport({ aiResult, ocrResult, imageMeta = null }) {
   const { category, risk_score, confidence = 1.0 } = aiResult;
   const meta = CATEGORY_META[category] ?? CATEGORY_META['NORMAL'];
 
-  // Step 1: OCR 텍스트로 패턴 규칙 매칭
+  // ── Step 1: OCR 패턴 매칭 ──────────────────────────
   const allMatched = ocrResult.success ? matchRules(ocrResult.text) : [];
 
-  // 같은 카테고리 매칭 vs 다른 카테고리 매칭 분리
-  const ocrPatterns = allMatched.filter((r) => r.category === category);
-  const crossPatterns = allMatched.filter(
+  const sameCategory  = allMatched.filter((r) => r.category === category);
+  const crossCategory = allMatched.filter(
     (r) => r.category !== category && r.category !== 'NORMAL'
   );
 
-  // Step 2: OCR 가산점으로 risk_score 보정
+  // ── Step 2: 점수 보정 ──────────────────────────────
   const weightMap = calcWeightByCategory(allMatched);
-  const ocrBonus = weightMap[category] ?? 0;
+  const ocrBonus  = weightMap[category] ?? 0;
+  const baseScore = category === 'NORMAL'
+    ? 0
+    : Math.max(RISK_LEVEL_SCORE[meta.riskLevel], risk_score);
 
-  const baseScore =
-    category === 'NORMAL' ? 0 : Math.max(RISK_LEVEL_SCORE[meta.riskLevel], risk_score);
-
-  // OCR 보너스는 최대 30점까지만 가산
-  const adjustedScore = Math.min(
+  const overallRiskScore = Math.min(
     Math.round((baseScore + Math.min(ocrBonus, 30)) * confidence),
     100
   );
 
-  // Step 3: crossPatterns에 CRITICAL 카테고리가 있으면 riskLevel 한 단계 상향
-  const hasCriticalCross = crossPatterns.some(
+  // ── Step 3: riskLevel 보정 ─────────────────────────
+  const hasCriticalCross = crossCategory.some(
     (r) => CATEGORY_META[r.category]?.riskLevel === 'CRITICAL'
   );
-  const finalRiskLevel = hasCriticalCross ? upgradeRiskLevel(meta.riskLevel) : meta.riskLevel;
+  const finalRiskLevel = hasCriticalCross
+    ? upgradeRiskLevel(meta.riskLevel)
+    : meta.riskLevel;
 
-  // Step 4: OCR 패턴 evidence를 suggestions에 추가
-  const ocrSuggestions = ocrPatterns.map((r) => `[${r.id}] ${r.evidence}`);
+  // ── Step 4: detectedPatterns 생성 ─────────────────
+  // 프론트 detectedPatterns 구조에 맞게 변환
+  const detectedPatterns = [
+    // AI 분류 기반 기본 패턴 (category가 NORMAL이 아닐 때)
+    ...(category !== 'NORMAL'
+      ? meta.patterns.map((name, idx) => ({
+          id: idx + 1,
+          category,
+          patternName: name,
+          riskLevel: finalRiskLevel,
+          description: meta.message,
+          recommendation: meta.suggestions[idx] ?? meta.suggestions[0] ?? '',
+          location: null,           // AI팀이 추후 채울 필드
+          sourceImageId: imageMeta?.id ?? null,
+        }))
+      : []),
+    // OCR 탐지 패턴 (같은 카테고리)
+    ...sameCategory.map((r, idx) => ({
+      id: meta.patterns.length + idx + 1,
+      category: r.category,
+      patternName: r.label,
+      riskLevel: finalRiskLevel,
+      description: r.evidence,
+      recommendation: `[${r.id}] ${r.evidence}`,
+      location: null,
+      sourceImageId: imageMeta?.id ?? null,
+      matchedText: r.matchedText,   // OCR 증거 텍스트 (프론트 추가 표시용)
+    })),
+    // 복합 패턴 (다른 카테고리)
+    ...crossCategory.map((r, idx) => ({
+      id: meta.patterns.length + sameCategory.length + idx + 1,
+      category: r.category,
+      patternName: r.label,
+      riskLevel: CATEGORY_META[r.category]?.riskLevel ?? 'MEDIUM',
+      description: r.evidence,
+      recommendation: `[${r.id}] ${r.evidence}`,
+      location: null,
+      sourceImageId: imageMeta?.id ?? null,
+      matchedText: r.matchedText,
+    })),
+  ];
+
+  // ── Step 5: guidelineCompliance 배열 생성 ──────────
+  // 프론트 guidelineCompliance 구조에 맞게 변환
+  const detectedCategories = new Set(detectedPatterns.map((p) => p.category));
+  const guidelineCompliance = ALL_CATEGORIES.map((cat) => ({
+    category: cat,
+    isCompliant: !detectedCategories.has(cat),
+    details: detectedCategories.has(cat)
+      ? `${CATEGORY_META[cat].label} 패턴 탐지됨`
+      : '위반 없음',
+  }));
+
+  // ── Step 6: summary 생성 ──────────────────────────
+  const summary = detectedPatterns.length > 0
+    ? `해당 화면에서 총 ${detectedPatterns.length}건의 다크패턴이 탐지됐습니다. ${meta.message}`
+    : '다크패턴이 탐지되지 않았습니다.';
 
   return {
-    // 분류 결과
+    // ── 프론트 스펙 필드 ──────────────────────────────
     category,
-    categoryLabel: meta.label,
+    categoryLabel: meta.label,           // 프론트 CATEGORY_CONFIG label과 동일
+    overallRiskScore,                     // 0~100 (구: riskScore)
+    riskLevel: finalRiskLevel,            // SAFE | MEDIUM | HIGH | CRITICAL
+    summary,                              // 요약 텍스트 (신규)
+    totalDetected: detectedPatterns.length, // 탐지 총 개수 (신규)
+    detectedPatterns,                     // 패턴 목록 (구: ocrPatterns)
+    guidelineCompliance,                  // 준수 여부 배열 (구: guidelineRef 문자열)
 
-    // 위험도
-    riskScore: adjustedScore,
-    riskLevel: finalRiskLevel,
-    message: meta.message,
-    guidelineRef: meta.guidelineRef,
-
-    // 패턴 목록
-    patterns: meta.patterns,
-    ocrPatterns: ocrPatterns.map((r) => ({
-      id: r.id,
-      label: r.label,
-      matchedText: r.matchedText,
-      evidence: r.evidence,
-    })),
-    crossPatterns: crossPatterns.map((r) => ({
-      id: r.id,
-      category: r.category,
-      label: r.label,
-      matchedText: r.matchedText,
-    })),
-
-    // 개선 가이드
-    suggestions: [...meta.suggestions, ...ocrSuggestions],
-
-    // OCR 원문
+    // ── 추가 정보 ─────────────────────────────────────
+    suggestions: [
+      ...meta.suggestions,
+      ...sameCategory.map((r) => `[${r.id}] ${r.evidence}`),
+    ],
     ocr: {
       text: ocrResult.text,
       confidence: ocrResult.confidence,
       success: ocrResult.success,
     },
-
-    // 메타
     confidence: Math.round(confidence * 100),
     analyzedAt: new Date().toISOString(),
   };
