@@ -1,61 +1,76 @@
-# ══════════════════════════════════════════════════════
-#  UXAudit — docker-compose.yml
-#
-#  모드 1: Mock 모드 (AI 서버 없이 테스트)
-#    docker-compose --profile mock up
-#
-#  모드 2: 실제 AI 서버 포함 전체 실행
-#    docker-compose up
-#
-#  개별 서비스만 실행:
-#    docker-compose up backend        ← 백엔드만
-#    docker-compose up ai-server      ← AI 서버만
-# ══════════════════════════════════════════════════════
-
 version: '3.9'
 
 services:
 
-  # ── 백엔드 (Node.js + Express) ──────────────────────
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: uxaudit-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - uxaudit-net
+
+  frontend-mock:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: uxaudit-frontend-mock
+    profiles:
+      - mock
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    depends_on:
+      - backend-mock
+    restart: unless-stopped
+    networks:
+      - uxaudit-net
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: uxaudit-backend
     ports:
-      - "3000:3000"             # 로컬 3000 → 컨테이너 3000
+      - "3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      AI_SERVER_URL: http://ai-server:8000   # 컨테이너 내부 통신
-      USE_MOCK_AI: "false"                   # 실제 AI 서버 사용
+      AI_SERVER_URL: http://ai-server:8000
+      USE_MOCK_AI: "false"
     depends_on:
       ai-server:
-        condition: service_healthy           # AI 서버 헬스체크 통과 후 시작
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - uxaudit-net
 
-  # ── 백엔드 Mock 모드 (AI 서버 없이 단독 테스트) ─────
   backend-mock:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: uxaudit-backend-mock
     profiles:
-      - mock                                 # --profile mock 으로만 활성화
+      - mock
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: development
       PORT: 3000
       USE_MOCK_AI: "true"
-      MOCK_CATEGORY: ""                      # 비워두면 라운드로빈 순환
+      MOCK_CATEGORY: ""
     restart: unless-stopped
     networks:
       - uxaudit-net
 
-  # ── AI 서버 (FastAPI) ──────────────────────────────
   ai-server:
     build:
       context: ./ai-server
@@ -68,18 +83,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s                      # 모델 로딩 대기 시간
+      start_period: 30s
     restart: unless-stopped
     networks:
       - uxaudit-net
-    # GPU 사용 시 아래 주석 해제
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
 
 networks:
   uxaudit-net:

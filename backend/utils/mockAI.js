@@ -44,7 +44,7 @@ const CATEGORIES = Object.keys(MOCK_RESPONSES);
 let roundRobinIndex = 0;
 
 /**
- * Mock AI 응답 반환
+ * Mock AI 응답 반환 
  *
  * @returns {{ category: string, risk_score: number, confidence: number }}
  */
