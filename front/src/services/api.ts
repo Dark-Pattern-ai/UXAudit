@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || 'http://localhost:3000/api';
 
 /** 백엔드 1장 분석 응답 타입 */
 export interface AIAnalyzeResponse {
