@@ -1,8 +1,7 @@
-fastapi==0.111.0
-uvicorn==0.29.0
-python-multipart==0.0.9
-torch==2.3.0
-open-clip-torch==2.24.0
-scikit-learn==1.5.0
-Pillow==10.3.0
-numpy==1.26.4
+fastapi
+uvicorn
+python-multipart
+easyocr
+openai
+python-dotenv
+Pillow
