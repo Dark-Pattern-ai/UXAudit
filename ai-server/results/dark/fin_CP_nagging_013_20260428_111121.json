@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "filename": "fin_CP_nagging_013.png",
+    "analyzed_at": "2026-04-28T11:11:21.578081",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.95,
+    "overall_severity": "HIGH",
+    "severity_score": 3,
+    "executive_summary": "본 스크린샷에는 사용자에게 긴박감을 조성하여 충동적인 행동을 유도하는 다크패턴이 명확하게 존재합니다. '축하합니다!', '깜짝 할인 찬스', '품절 전 득템'과 같은 문구를 통해 사용자가 혜택을 놓칠까 봐 두려워하게 만들어 즉시 쿠폰을 받거나 구매하도록 압박합니다.",
+    "recommendation": "앱 내에서 사용자에게 할인 혜택이나 이벤트 정보를 전달할 때, 강압적이거나 긴박감을 조성하는 문구를 지양해야 합니다. 정보는 명확하고 투명하게 제공하되, 사용자가 충분히 고려하고 합리적인 결정을 내릴 수 있도록 유도하는 정직한 UI/UX 디자인을 적용해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "urgency",
+        "name": "긴박감 조성",
+        "evidence": "팝업창의 제목은 '축하합니다!'로 사용자의 긍정적인 감정을 유도합니다. 이어서 '고객님 깜짝 할인 찬스에요.'라는 문구는 특별하고 한정된 기회임을 암시하며, '인기상품 품절 전 득템하세요.'는 상품이 곧 소진될 것이라는 긴박감을 조성하여 사용자가 서둘러 행동하도록 압박합니다. 또한 '쿠폰 잊지말고 받아가세요.'라는 문구는 쿠폰을 받지 않으면 손해 볼 수 있다는 심리를 자극합니다.",
+        "severity": "HIGH",
+        "user_harm": "사용자는 합리적인 구매 의사결정을 할 시간 없이, 할인 혜택을 놓치거나 인기 상품이 품절될 수 있다는 심리적 압박을 받아 충동적인 쿠폰 다운로드 또는 구매를 하게 될 가능성이 높습니다. 이는 불필요한 소비나 구매 후 후회로 이어질 수 있습니다.",
+        "improvement": "긴박감을 조성하는 문구('깜짝', '찬스', '품절 전', '잊지말고')를 삭제하고, 쿠폰 혜택의 내용을 명확하게 전달해야 합니다. 예를 들어, '새로운 할인 쿠폰이 도착했습니다!' 또는 '사용 가능한 쿠폰을 확인해보세요.'와 같이 정보를 제공하는 방식으로 변경해야 합니다. 쿠폰의 유효기간이나 수량 제한이 있다면 투명하게 명시하되, 과장된 표현으로 구매를 유도하지 않아야 합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "팝업창의 제목은 '축하합니다!'로 사용자의 긍정적인 감정을 유도합니다. 이어서 '고객님 깜짝 할인 찬스에요.'라는 문구는 특별하고 한정된 기회임을 암시하며, '인기상품 품절 전 득템하세요.'는 상품이 곧 소진될 것이라는 긴박감을 조성하여 사용자가 서둘러 행동하도록 압박합니다. 또한 '쿠폰 잊지말고 받아가세요.'라는 문구는 쿠폰을 받지 않으면 손해 볼 수 있다는 심리를 자극합니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "3.33 LTE 58 coupang 쿠광에서 검색하세요! 가정의달 upto40% ' 구장품레드 sAE 축하합니다! 고객님 깜짝 활인 찬스에요 구문 잊지말고 받아가세요. 확인 자주 신 더보기 Puremoat...",
+      "blocks_count": 16,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": true,
+      "total_score": 0.8,
+      "detections": [
+        {
+          "pattern_id": "urgency_pressure",
+          "pattern_name": "긴박감 조성",
+          "severity": "HIGH",
+          "matched_keywords": [
+            "깜짝",
+            "찬스",
+            "잊지말고"
+          ],
+          "matched_patterns": [
+            "찬스"
+          ],
+          "confidence_score": 0.8
+        }
+      ]
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

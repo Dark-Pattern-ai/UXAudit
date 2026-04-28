@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "filename": "정상_로지텍.png",
+    "analyzed_at": "2026-04-28T13:55:03.412411",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.9,
+    "overall_severity": "MEDIUM",
+    "severity_score": 2,
+    "executive_summary": "Logitech 소프트웨어 다운로드 페이지에서 'Harmony App'과 'MyHarmony' 두 소프트웨어가 동일한 아이콘으로 표시되어 사용자에게 명백한 혼란을 야기하는 '주의 분산/모호성' 다크패턴이 발견되었습니다. 이로 인해 사용자는 어떤 소프트웨어를 선택해야 할지 판단하기 어려워하며, 잘못된 다운로드 및 시간 낭비로 이어질 수 있습니다.",
+    "recommendation": "사용자 경험을 개선하고 혼란을 방지하기 위해, 동일하거나 유사한 기능/이름을 가진 소프트웨어 항목은 반드시 시각적으로 명확하게 구분되어야 합니다. 아이콘 차별화와 함께 각 소프트웨어의 목적을 명확히 설명하는 간략한 텍스트를 제공하여 사용자가 직관적으로 올바른 선택을 할 수 있도록 웹사이트 UI를 개선해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "misdirection",
+        "name": "주의 분산 / 모호성",
+        "evidence": "Logitech 소프트웨어 목록에서 'Harmony App'과 'MyHarmony'라는 두 개의 다른 소프트웨어 항목이 완전히 동일한 아이콘(파란색 배경에 흰색 'HARMONY' 텍스트)을 사용하고 있습니다. 이러한 시각적 중복은 사용자가 어떤 소프트웨어를 다운로드해야 하는지 즉시 판단하기 어렵게 만들며, 불필요한 혼란을 야기합니다. 각 앱의 기능이나 대상 제품군에 대한 추가적인 시각적 또는 텍스트적 단서가 전혀 없습니다.",
+        "severity": "MEDIUM",
+        "user_harm": "사용자는 두 개의 동일한 아이콘을 보고 어느 앱이 자신의 Harmony 제품에 적합한지 판단하기 어려워합니다. 이는 잘못된 소프트웨어 다운로드로 이어질 수 있으며, 불필요한 시간 낭비, 좌절감, 그리고 결과적으로 부정적인 사용자 경험을 초래합니다. 사용자가 올바른 앱을 찾기 위해 추가적인 조사를 하거나 여러 번의 시도를 해야 할 수 있습니다.",
+        "improvement": "두 Harmony 관련 소프트웨어의 아이콘을 시각적으로 명확하게 구분해야 합니다. 예를 들어, 다른 색상, 작은 차별화된 심볼, 또는 각 앱의 고유한 기능을 암시하는 디자인 요소를 추가할 수 있습니다. 또한, 각 소프트웨어 이름 아래에 간략하고 명확한 설명을 추가하여 (예: '새로운 Harmony 제품용 앱', '이전 Harmony 허브 제품 관리 앱') 사용자가 혼동 없이 올바른 선택을 할 수 있도록 도와야 합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "Logitech 소프트웨어 목록에서 'Harmony App'과 'MyHarmony'라는 두 개의 다른 소프트웨어 항목이 완전히 동일한 아이콘(파란색 배경에 흰색 'HARMONY' 텍스트)을 사용하고 있습니다. 이러한 시각적 중복은 사용자가 어떤 소프트웨어를 다운로드해야 하는지 즉시 판단하기 어렵게 만들며, 불필요한 혼란을 야기합니다. 각 앱의 기능이나 대상 제품군에 대한 추가적인 시각적 또는 텍스트적 단서가 전혀 없습니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "Iogitech 제품 소프트웨어 지구 Options + Logi Tune Onboard Memory Logitech Logitech Logitech Gaming Manager Connection Utility Presentation Software crtra HARMONY HARMONY G HUB Streamlabs Astro Firmware Harmony...",
+      "blocks_count": 26,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

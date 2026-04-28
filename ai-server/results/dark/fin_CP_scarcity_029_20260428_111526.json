@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "filename": "fin_CP_scarcity_029.png",
+    "analyzed_at": "2026-04-28T11:15:26.320666",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.95,
+    "overall_severity": "HIGH",
+    "severity_score": 3,
+    "executive_summary": "이 웹페이지는 '할인 종료 2일 남음'과 같은 긴박감을 조성하는 문구를 사용하여 사용자의 충동 구매를 유도하는 다크패턴을 사용하고 있습니다. 이는 사용자의 합리적인 의사결정을 방해하며 불필요한 구매로 이어질 수 있습니다.",
+    "recommendation": "할인 정보를 제공할 때는 사용자가 압박감을 느끼지 않도록 사실 기반의 중립적인 문구를 사용해야 합니다. 할인 종료까지 남은 시간을 직접적으로 표시하기보다는, 할인 적용 기간을 명확하게 안내하는 방식으로 UI를 개선해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "urgency",
+        "name": "긴박감 조성",
+        "evidence": "각 상품 정보 아래 '할인 종료 2일 남음'이라는 문구가 눈에 띄게 표시되어 있습니다. 이는 할인 혜택이 곧 사라질 것이라는 인상을 주어 사용자에게 심리적 압박감을 조성합니다.",
+        "severity": "HIGH",
+        "user_harm": "사용자는 할인 혜택을 놓칠까 봐 충분한 고민 없이 충동적으로 상품을 구매하게 될 수 있습니다. 이는 불필요한 구매로 이어지거나, 다른 상품과의 비교 또는 합리적인 의사결정을 방해하여 구매 만족도를 저하시킬 수 있습니다.",
+        "improvement": "할인 기간을 명확하게 안내하되, 'X일 남음'과 같은 긴박감을 조성하는 문구 대신 '현재 할인 중', '할인 기간: YYYY.MM.DD ~ YYYY.MM.DD' 등 사실 기반의 정보를 제공해야 합니다. 또는 재고 소진 등의 실제 제약이 있는 경우에만 해당 정보를 명확하게 표시하는 것이 좋습니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "각 상품 정보 아래 '할인 종료 2일 남음'이라는 문구가 눈에 띄게 표시되어 있습니다. 이는 할인 혜택이 곧 사라질 것이라는 인상을 주어 사용자에게 심리적 압박감을 조성합니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "세제 RLux 내승비 프양 눕 5.5kg; 2개 활인중 9,580원 (1003당 872) 배승 세정제, 2개 b인 공료 2일 남음 와두 버승 무료반품 VO) X 2809,...",
+      "blocks_count": 16,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": true,
+      "total_score": 0.8,
+      "detections": [
+        {
+          "pattern_id": "urgency_pressure",
+          "pattern_name": "긴박감 조성",
+          "severity": "HIGH",
+          "matched_keywords": [],
+          "matched_patterns": [
+            "('일', '남음')"
+          ],
+          "confidence_score": 0.8
+        }
+      ]
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

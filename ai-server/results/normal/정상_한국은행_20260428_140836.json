@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "filename": "정상_한국은행.png",
+    "analyzed_at": "2026-04-28T14:08:36.891415",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": false,
+    "confidence_score": 0.95,
+    "overall_severity": "NONE",
+    "severity_score": 0,
+    "executive_summary": "제공된 웹페이지 스크린샷에서는 사용자를 속이거나 조작하려는 다크패턴이 탐지되지 않았습니다. 정보 제공을 목적으로 하는 웹사이트의 전형적인 레이아웃과 기능을 따르고 있으며, UI 구성이나 디자인에서 심리적 압박, 중요 정보 숨기기, 시각적 조작, 거절/취소 버튼의 의도적인 눈에 띄지 않음 등의 다크패턴 요소가 발견되지 않았습니다.",
+    "recommendation": "현재 웹페이지는 사용자에게 정보를 명확하게 전달하고 있으며, 다크패턴으로 판단될 만한 요소가 없습니다. 따라서 특별한 개선 방안은 필요하지 않아 보입니다. 다만, 향후 새로운 기능이나 서비스 추가 시에도 사용자 친화적인 디자인 원칙을 유지하는 것이 중요합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [],
+    "user_impact": "",
+    "evidence_found": []
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "한국은행 BANK OH KOREA 한국은행 정책업무 뉴스자료 대국민 서비스 a BOK 이수 216 P 5 3 보도참고자료 보도자료 보도자료 2026년 3월 [물가상황점검회의] 개최 2025년중 국내 지급결제동향 2026년 3월말 외환보유액 한국은행은 4.2일(목) 오전 8시 30분 본관 16층 2025년중 신용카드 등 지급카드 이용규모(일= 회의실에서 유상...",
+      "blocks_count": 26,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

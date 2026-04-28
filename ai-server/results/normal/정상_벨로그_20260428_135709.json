@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "filename": "정상_벨로그.png",
+    "analyzed_at": "2026-04-28T13:57:09.683928",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": false,
+    "confidence_score": 0.95,
+    "overall_severity": "NONE",
+    "severity_score": 0,
+    "executive_summary": "제공된 웹페이지 스크린샷에서는 사용자를 속이거나 조작하려는 명확한 다크패턴이 발견되지 않았습니다. UI는 일반적인 블로그/콘텐츠 플랫폼의 표준 레이아웃과 기능을 따르고 있으며, 심리적 압박, 숨겨진 정보, 시각적 조작 등의 징후는 나타나지 않습니다.",
+    "recommendation": "현재 스크린샷만으로는 특별한 개선 사항을 권고할 필요가 없습니다. 다만, 향후 서비스 개발 시 사용자 경험을 최우선으로 고려하고 다크패턴 요소가 삽입되지 않도록 지속적인 검토가 필요합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [],
+    "user_impact": "",
+    "evidence_found": []
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "velog Q 로그인 트렌딩 추천 최신 피드 이번 주 Claude Code Source Snapshot for Security Research code Like personat insutt and This repository mirrors publicly exposed Claude Code source snapshot that became accessibl...",
+      "blocks_count": 88,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

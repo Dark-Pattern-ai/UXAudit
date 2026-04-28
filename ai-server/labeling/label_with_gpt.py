@@ -104,56 +104,60 @@ def label_image(image_path):
     return response.choices[0].message.content
 
 
-# ===== 실행 =====
 if __name__ == "__main__":
-    image_folder = Path(__file__).parent / "images"
+    image_folder = Path(__file__).parent / "images_B4E2"
     output_file = Path(__file__).parent / "output" / "labels_B4E2.jsonl"
 
-    # images 폴더 확인
     image_files = sorted([
         f for f in os.listdir(image_folder)
         if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
     ])
 
-    print(f"총 {len(image_files)}장 발견\n")
+    # ✅ 이미 처리된 파일 목록 로드
+    already_done = set()
+    if output_file.exists():
+        with open(output_file, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    already_done.add(data.get("file", ""))
+                except:
+                    pass
+    print(f"총 {len(image_files)}장 발견 / 이미 처리: {len(already_done)}장\n")
 
-    # write 모드 
-    with open(output_file, "w", encoding="utf-8") as out:
+    # ✅ append 모드로 변경
+    with open(output_file, "a", encoding="utf-8") as out:
         for i, fname in enumerate(image_files):
+
+            # ✅ 이미 처리됐으면 건너뜀
+            if fname in already_done:
+                continue
+
             print(f"[{i+1}/{len(image_files)}] {fname} ... ", end="")
             try:
                 result = label_image(str(image_folder / fname))
-
-                # JSON 파싱 시도
-                # GPT가 ```json ... ``` 으로 감싸는 경우 처리
                 cleaned = result.strip()
                 if cleaned.startswith("```"):
                     cleaned = cleaned.split("\n", 1)[1]
                     cleaned = cleaned.rsplit("```", 1)[0].strip()
-
                 parsed = json.loads(cleaned)
                 out.write(json.dumps(parsed, ensure_ascii=False) + "\n")
-                print(f"✓ label={parsed.get('primary_label')} "
-                      f"conf={parsed.get('confidence')}")
+                out.flush()
+                print(f"✓ label={parsed.get('primary_label')} conf={parsed.get('confidence')}")
 
             except json.JSONDecodeError:
-                error_line = {
-                    "file": fname,
-                    "error": "JSON 파싱 실패",
-                    "raw": result,
-                }
+                error_line = {"file": fname, "error": "JSON 파싱 실패", "raw": result}
                 out.write(json.dumps(error_line, ensure_ascii=False) + "\n")
+                out.flush()
                 print("⚠ JSON 파싱 실패")
 
             except Exception as e:
-                error_line = {
-                    "file": fname,
-                    "error": str(e),
-                    "raw": "",
-                }
+                error_line = {"file": fname, "error": str(e), "raw": ""}
                 out.write(json.dumps(error_line, ensure_ascii=False) + "\n")
+                out.flush()
                 print(f"⚠ 오류: {e}")
+                time.sleep(10)
 
-                time.sleep(5)
+            time.sleep(2)  # 매 요청마다 2초 대기
 
     print(f"\n완료! 결과 저장: {output_file}")

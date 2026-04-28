@@ -1,0 +1,442 @@
+{
+  "batch_run_at": "2026-04-28T14:08:36.919500",
+  "total": 37,
+  "success": 36,
+  "fail": 1,
+  "results": [
+    {
+      "filename": "정상_29CM.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    },
+    {
+      "filename": "정상_Dropbox.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.8,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "subscription_trap"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_DuckDuckGo.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.7,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_Hulu.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_Proton Mail.png",
+      "status": "timeout"
+    },
+    {
+      "filename": "정상_signal.png",
+      "is_dark_pattern": true,
+      "overall_severity": "LOW",
+      "confidence_score": 0.65,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_wise.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.95,
+      "rule_detected": true,
+      "llm_success": true,
+      "patterns_detected": [
+        "urgency",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_구글.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "subscription_trap"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_기상청.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.85,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_깃허브.png",
+      "is_dark_pattern": true,
+      "overall_severity": "LOW",
+      "confidence_score": 0.65,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_깃허브2.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.85,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection",
+        "subscription_trap"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_나무위키.png",
+      "is_dark_pattern": true,
+      "overall_severity": "LOW",
+      "confidence_score": 0.7,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "urgency"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_네이버.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection",
+        "roach_motel"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_넷플릭스.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_로지텍.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_무신사.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "roach_motel"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_배민.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.85,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_벨로그.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    },
+    {
+      "filename": "정상_쇼피파이.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "subscription_trap",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_스팀.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.8,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "roach_motel"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_어도비.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "subscription_trap",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_영국 정부 사이트.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    },
+    {
+      "filename": "정상_오늘의 집.png",
+      "is_dark_pattern": true,
+      "overall_severity": "LOW",
+      "confidence_score": 0.6,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_웨더나우.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_위키백과.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 1.0,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    },
+    {
+      "filename": "정상_유튜브.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection",
+        "misdirection",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_유튜브.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "roach_motel",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_인터넷 아카이브.png",
+      "is_dark_pattern": true,
+      "overall_severity": "LOW",
+      "confidence_score": 0.6,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_정부24(2).png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_정부24.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 1.0,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    },
+    {
+      "filename": "정상_제미나이.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.85,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_지마켓.png",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_쿠팡 와우해지.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.95,
+      "rule_detected": true,
+      "llm_success": true,
+      "patterns_detected": [
+        "roach_motel",
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_크림.png",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "urgency"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_학생복지스토어 (2).jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "HIGH",
+      "confidence_score": 0.9,
+      "rule_detected": true,
+      "llm_success": true,
+      "patterns_detected": [
+        "misdirection"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_학생복지스토어.jpg",
+      "is_dark_pattern": true,
+      "overall_severity": "MEDIUM",
+      "confidence_score": 0.9,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [
+        "urgency"
+      ],
+      "status": "success"
+    },
+    {
+      "filename": "정상_한국은행.png",
+      "is_dark_pattern": false,
+      "overall_severity": "NONE",
+      "confidence_score": 0.95,
+      "rule_detected": false,
+      "llm_success": true,
+      "patterns_detected": [],
+      "status": "success"
+    }
+  ]
+}

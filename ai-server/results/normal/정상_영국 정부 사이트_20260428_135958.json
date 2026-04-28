@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "filename": "정상_영국 정부 사이트.png",
+    "analyzed_at": "2026-04-28T13:59:58.655039",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": false,
+    "confidence_score": 0.95,
+    "overall_severity": "NONE",
+    "severity_score": 0,
+    "executive_summary": "제공된 GOV.UK 웹페이지 스크린샷을 분석한 결과, 사용자를 속이거나 조작하려는 어떠한 다크패턴도 발견되지 않았습니다. UI는 명확하고 직관적이며, 정부 서비스 및 정보 제공이라는 목적에 충실하게 설계되었습니다.",
+    "recommendation": "현재 UI는 명확하고 사용 친화적이며, 다크패턴을 포함하고 있지 않습니다. 정보 접근성을 높이고 신뢰를 유지하기 위한 현재의 디자인 원칙을 계속 유지하는 것을 권장합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [],
+    "user_impact": "",
+    "evidence_found": []
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "GOV UK Menu The best place tofind government services andinformation Search Popular on GOVUK HMRCaccount: signin안 eVisas:accessanduseyo반r Universalcreditaccount: setup onlineimmigration status signin ...",
+      "blocks_count": 18,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

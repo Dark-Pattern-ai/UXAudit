@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "filename": "정상_넷플릭스.png",
+    "analyzed_at": "2026-04-28T13:54:31.479630",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.9,
+    "overall_severity": "HIGH",
+    "severity_score": 3,
+    "executive_summary": "Netflix 멤버십 선택 화면에서 가장 비싼 '프리미엄' 요금제가 사전 선택되어 있고 시각적으로 강하게 강조되어 있어, 사용자가 의도치 않게 고가의 요금제를 선택하도록 유도하는 'misdirection' 다크패턴이 발견되었습니다. 이는 사용자의 합리적인 의사결정을 방해하고 불필요한 지출을 야기할 수 있습니다.",
+    "recommendation": "멤버십 선택 시 어떠한 옵션도 사전 선택하지 않거나, 모든 옵션이 공정한 시각적 중요도를 갖도록 UI를 재설계해야 합니다. 사용자의 자율적인 선택을 존중하며 정보가 투명하게 전달되도록 UI 가이드라인을 준수해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "misdirection",
+        "name": "프리미엄 요금제 사전 선택 및 시각적 강조",
+        "evidence": "세 가지 멤버십 옵션 중 가장 비싼 '프리미엄' 요금제가 페이지 로드 시 기본적으로 선택(체크표시)되어 있으며, 다른 옵션에 비해 배경색상(레드-퍼플 그라데이션)이 더 밝고 눈에 띄게 강조되어 있습니다. 이는 사용자에게 특정 옵션으로 주의를 유도하는 시각적 조작입니다.",
+        "severity": "HIGH",
+        "user_harm": "사용자는 모든 옵션을 면밀히 비교하지 않고 기본 선택된 옵션을 그대로 진행할 가능성이 높습니다. 이로 인해 본인이 원하거나 필요로 하는 것보다 더 비싼 요금제를 무심코 구독하게 되어 불필요한 비용을 지불할 수 있습니다.",
+        "improvement": "어떤 멤버십도 사전 선택하지 않거나, 만약 기본 선택이 필요하다면 가장 저렴하거나 가장 인기 있는 옵션을 선택하되, 시각적 강조는 줄여 모든 옵션이 동일한 시각적 중요도를 갖도록 해야 합니다. 사용자가 직접 선택할 때에만 강조 효과를 적용하는 것이 바람직합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "세 가지 멤버십 옵션 중 가장 비싼 '프리미엄' 요금제가 페이지 로드 시 기본적으로 선택(체크표시)되어 있으며, 다른 옵션에 비해 배경색상(레드-퍼플 그라데이션)이 더 밝고 눈에 띄게 강조되어 있습니다. 이는 사용자에게 특정 옵션으로 주의를 유도하는 시각적 조작입니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "NETFLIX 로그아웃 리3단계 원하는 멈버십올 선택하세요 광고형 스랜다드 스랜다드 프리미엄 1o8Op 108Op 4K + HDR 월요금 월 요금 월 요금 7,000원 13,500원 17,000원 화질과 음질 화질과 음질 화질과 음질 좋음 좋음 가장 좋음 해상도 해상도 해상도 1o8Op(풀 HD) 1o8Op(풀 HD) 4K(UHD) + HDR 지원 디바이스...",
+      "blocks_count": 45,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

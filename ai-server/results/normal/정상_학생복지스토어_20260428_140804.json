@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "filename": "정상_학생복지스토어.jpg",
+    "analyzed_at": "2026-04-28T14:08:04.937482",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.9,
+    "overall_severity": "MEDIUM",
+    "severity_score": 2,
+    "executive_summary": "이 웹페이지는 제품 이미지 위에 '오늘 도착'이라는 문구를 강조하는 다크패턴을 사용하여 사용자에게 불필요한 긴박감을 조성하고 충동적인 구매를 유도합니다. 이는 사용자의 합리적인 의사결정을 방해하고 심리적 압박을 가할 수 있습니다.",
+    "recommendation": "'오늘 도착'과 같은 긴박감을 조성하는 시각적 요소는 제거하고, 배송 관련 정보는 제품 상세 페이지 내에서 명확하고 객관적인 방식으로 제공하여 사용자가 충분한 정보를 바탕으로 스스로 의사결정을 내릴 수 있도록 해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "urgency",
+        "name": "긴박감 조성",
+        "evidence": "제품 이미지 우측 상단에 보라색 원형 박스로 '오늘 도착'이라는 문구가 크게 표시되어 있습니다. 이는 제품이 당일 배송된다는 점을 강조하여 사용자에게 구매를 서두르도록 유도합니다.",
+        "severity": "MEDIUM",
+        "user_harm": "사용자는 '오늘 도착'이라는 문구를 보고 제품을 즉시 구매해야 할 것 같은 심리적 압박을 느끼게 됩니다. 이는 충분한 고민 없이 충동적인 구매 결정을 내리게 만들 수 있으며, 다른 제품과의 비교나 자신의 실제 필요 여부를 신중하게 고려할 기회를 박탈할 수 있습니다.",
+        "improvement": "특정 배송 정보를 제품 이미지 위에 강조하는 대신, 배송 정보(예: 예상 배송 시간, 배송 옵션 등)를 제품 상세 페이지 내의 표준적인 정보 섹션에 명확하고 간결하게 제공해야 합니다. 이는 사용자가 필요에 따라 정보를 찾고 합리적인 구매 결정을 내리도록 돕습니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "제품 이미지 우측 상단에 보라색 원형 박스로 '오늘 도착'이라는 문구가 크게 표시되어 있습니다. 이는 제품이 당일 배송된다는 점을 강조하여 사용자에게 구매를 서두르도록 유도합니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "everyuneez 학생복지스토어 = 카테고리 혜택-이번트 브랜드 오늘 도착 ' 삼성 > 길력시 S26+ 자급제 256GB 코발트 바이올렉 SM-S947NZVAKOO 7% 1,349,000원 5.0 리뷰 그개 장바구니 구매하기...",
+      "blocks_count": 16,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

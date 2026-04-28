@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "filename": "정상_구글.png",
+    "analyzed_at": "2026-04-28T13:50:11.985868",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.9,
+    "overall_severity": "MEDIUM",
+    "severity_score": 2,
+    "executive_summary": "이 웹페이지는 Google AI Plus 및 Ultra 요금제에서 '구독 함정' 다크패턴을 사용하여 사용자의 합리적인 의사결정을 방해하고 있습니다. 초기 할인 가격을 시각적으로 강조하고 실제 정가로의 인상 정보를 덜 두드러지게 표시함으로써 사용자가 장기적인 실제 비용을 오해하도록 유도하고 있습니다.",
+    "recommendation": "모든 요금제에 대해 초기 할인 가격, 할인 기간, 그리고 프로모션 기간 만료 후의 실제 정가 정보를 명확하고 동등한 시각적 중요도로 표시해야 합니다. 사용자가 서비스 가입 전에 모든 비용 정보를 투명하게 이해할 수 있도록 UI를 개선하는 것이 중요하며, 특히 혼란을 야기할 수 있는 문구 사용은 피해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "subscription_trap",
+        "name": "구독 함정 (미끼 가격)",
+        "evidence": "Google AI Plus 및 Google AI Ultra 요금제 모두에서 초기 할인 가격('₩5,500/월' 및 '₩180,000/월')이 크고 눈에 띄게 표시되어 있습니다. 그러나 해당 가격이 '2개월 동안' 또는 '3개월 동안'만 적용되는 프로모션 가격이며, 이후에는 원래 가격인 '₩11,000/월' 또는 '₩360,000/월'으로 인상된다는 정보('2개월 동안, ₩11,000/월 이후' 또는 '3개월 동안, ₩360,000/월 이후')는 더 작은 글씨로 아래에 배치되어 있어 즉각적인 인식이 어렵습니다. 특히 Google AI Plus의 경우, '₩11,000/월, 2개월 동안 ₩5,500/월 이후'와 같이 최종 가격을 먼저 제시하여 정보의 혼란을 가중시킬 수 있습니다.",
+        "severity": "MEDIUM",
+        "user_harm": "사용자는 처음에 제시된 낮은 가격(₩5,500/월 또는 ₩180,000/월)이 지속될 것이라고 오해하여 가입할 수 있습니다. 프로모션 기간이 끝난 후 예상치 못한 가격 인상에 직면하게 되면, 이는 금전적 손실뿐만 아니라 서비스에 대한 불신과 좌절감을 유발할 수 있습니다. 가격 인상에 대한 정보를 명확히 인지하지 못하면 불필요한 지출이 발생할 수 있습니다.",
+        "improvement": "초기 할인 가격, 할인 기간, 그리고 기간 만료 후 적용되는 정가 정보를 동일한 시각적 중요도로 명확하게 표시해야 합니다. 예를 들어, '₩5,500/월 (첫 2개월 한정, 이후 ₩11,000/월)'과 같이 모든 핵심 가격 정보를 한 줄에 명확히 표기하여 사용자가 서비스 가입 전에 장기적인 비용을 투명하게 이해할 수 있도록 개선해야 합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "Google AI Plus 및 Google AI Ultra 요금제 모두에서 초기 할인 가격('₩5,500/월' 및 '₩180,000/월')이 크고 눈에 띄게 표시되어 있습니다. 그러나 해당 가격이 '2개월 동안' 또는 '3개월 동안'만 적용되는 프로모션 가격이며, 이후에는 원래 가격인 '₩11,000/월' 또는 '₩360,000/월'으로 인상된다는 정보('2개월 동안, ₩11,000/월 이후' 또는 '3개월 동안, ₩360,000/월 이후')는 더 작은 글씨로 아래에 배치되어 있어 즉각적인 인식이 어렵습니다. 특히 Google AI Plus의 경우, '₩11,000/월, 2개월 동안 ₩5,500/월 이후'와 같이 최종 가격을 먼저 제시하여 정보의 혼란을 가중시킬 수 있습니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "Google AI Plus 요금제로 업그레이드하여 더 많은 액세스로 NotebookLM 등올 이용하세요 며는 천회권 Google Al Plus Google AlPro Google Al Ultra 참미섭은 높이세요 참의섭은 높이세요 w29,000월 Google AI Plus 가입어기 Google AI Pro 기립하기 Google AIUltra 가립하기 NDt...",
+      "blocks_count": 57,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

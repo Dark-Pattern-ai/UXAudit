@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "filename": "fin_UNKNOWN_obstruction_040.jpg",
+    "analyzed_at": "2026-04-28T11:36:02.471034",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.9,
+    "overall_severity": "MEDIUM",
+    "severity_score": 2,
+    "executive_summary": "해당 웹페이지 스크린샷에서 '회원 탈퇴' 옵션이 의도적으로 시각적 강조가 약한 회색 텍스트로 처리되어 사용자가 해당 기능을 찾기 어렵게 설계된 다크패턴이 탐지되었습니다. 이는 'misdirection' 유형에 해당하며, 사용자의 합리적인 서비스 이용 종료를 방해할 수 있습니다.",
+    "recommendation": "사용자가 서비스에서 탈퇴하는 것과 같은 중요한 결정과 관련된 기능은 다른 일반적인 설정 옵션들과 동등한 수준의 시각적 명확성을 제공해야 합니다. '회원 탈퇴' 옵션을 일반 텍스트 색상으로 변경하고, 접근성 측면에서 다른 설정 항목들과 차이를 두지 않도록 개선해야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "misdirection",
+        "name": "주의 분산 (탈퇴 옵션 비활성화/숨김)",
+        "evidence": "화면 하단에 위치한 '회원 탈퇴' (Membership Withdrawal) 메뉴 항목이 다른 활성화된 메뉴 항목들과 달리 회색 텍스트로 처리되어 시각적으로 덜 눈에 띄게 (de-emphasized) 되어 있습니다. 이는 사용자의 시선을 다른 곳으로 유도하거나 중요한 '탈출' 기능을 찾기 어렵게 만듭니다.",
+        "severity": "MEDIUM",
+        "user_harm": "사용자가 서비스를 더 이상 이용하고 싶지 않거나 개인 정보 삭제를 원할 때, 중요한 '회원 탈퇴' 옵션을 찾기 어려워 포기하거나 불필요한 노력을 하게 만듭니다. 이는 사용자의 자율적인 선택과 정보 통제권을 침해할 수 있습니다.",
+        "improvement": "'회원 탈퇴' 옵션을 다른 메뉴 항목들과 동일한 활성 텍스트 색상과 스타일로 표시하여 사용자가 쉽게 인지하고 접근할 수 있도록 해야 합니다. 만약 특정 조건 때문에 탈퇴가 불가능하다면, 단순히 비활성화하는 대신 명확한 이유를 제시해야 합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "화면 하단에 위치한 '회원 탈퇴' (Membership Withdrawal) 메뉴 항목이 다른 활성화된 메뉴 항목들과 달리 회색 텍스트로 처리되어 시각적으로 덜 눈에 띄게 (de-emphasized) 되어 있습니다. 이는 사용자의 시선을 다른 곳으로 유도하거나 중요한 '탈출' 기능을 찾기 어렵게 만듭니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "서비스 설정 계정 개인정보 서비스 기타 데이터 사용량 이용약관 알림 설정 캐시 삭제 회원 달리...",
+      "blocks_count": 11,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

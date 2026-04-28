@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "filename": "정상_위키백과.png",
+    "analyzed_at": "2026-04-28T14:01:44.011722",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": false,
+    "confidence_score": 1.0,
+    "overall_severity": "NONE",
+    "severity_score": 0,
+    "executive_summary": "제공된 웹페이지 스크린샷은 위키피디아와 유사한 정보 포털 인터페이스를 보여주며, 명확한 탐색, 콘텐츠 섹션 및 사용자 기본 설정 기능을 제공합니다. 사용자를 속이거나 조작하려는 다크패턴 요소는 발견되지 않았습니다.",
+    "recommendation": "다크패턴이 탐지되지 않았으므로 특별한 개선 권고 사항은 없습니다. UI는 의도된 목적에 부합하며 투명하고 사용자 친화적으로 보입니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [],
+    "user_impact": "",
+    "evidence_found": []
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "보이기 숨기기 틀 기록햇다. 특히 도덕적인 스토리라인과 높은 올입도로 중은 평가 위키백과 참여하기 많은 찬사름 받앉다. 바이오소크는 '철학과 심리와 도덕올 담구할 작음 환영합니다! 전적으로 새로운 도구\"라고 평가발기도 햇다. 표준 위키백과는 여러분올 환영합니다. 좋은 글: 방과 (애니메이선) 더 보기 금 이것부터 시작해 볼까요? 너비 알찬 목록: 3,000...",
+      "blocks_count": 52,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}

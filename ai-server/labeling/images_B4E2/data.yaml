@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 5
+names: ['button', 'checkbox', 'input_field', 'popup', 'qr_code']
+
+roboflow:
+  workspace: darkpattern-2rd6z
+  project: b4e2_darkpatterns_dataset-c1rv6
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/darkpattern-2rd6z/b4e2_darkpatterns_dataset-c1rv6/dataset/2

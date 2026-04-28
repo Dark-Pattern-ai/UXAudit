@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "filename": "fin_PDF_misdirection_035.png",
+    "analyzed_at": "2026-04-28T11:24:55.851468",
+    "pipeline_version": "MVP-v1.0",
+    "stages_used": [
+      "OCR",
+      "Rule-Based",
+      "LLM-Verification"
+    ]
+  },
+  "final_result": {
+    "is_dark_pattern": true,
+    "confidence_score": 0.95,
+    "overall_severity": "HIGH",
+    "severity_score": 3,
+    "executive_summary": "해당 웹페이지는 사용자에게 혼란과 압박을 주는 다크패턴을 사용하고 있습니다. 특히, 실제 PDF 다운로드 버튼과 유사한 디자인의 광고 'Download' 버튼이 주된 시선 위치에 있어 사용자의 오클릭을 유도할 위험이 높습니다. 또한, 30분 파일 삭제 알림은 사용자에게 불필요한 긴급성을 조성합니다.",
+    "recommendation": "핵심 기능과 광고를 명확히 구분하고, 광고 버튼은 주요 기능 버튼과 시각적으로 차별화해야 합니다. 파일 삭제 알림은 정보 제공에 집중하고 긴박감을 조성하는 표현을 지양해야 합니다. 다른 제품 설치 유도는 사용자의 주요 작업 흐름을 방해하지 않는 방식으로 제공되어야 합니다."
+  },
+  "detailed_analysis": {
+    "patterns_detected": [
+      {
+        "type": "misdirection",
+        "name": "광고로 인한 주의 분산 및 오클릭 유도",
+        "evidence": "페이지 중앙 상단에 'Become the ultimate crime lord'라는 광고 배너가 크게 위치하고 있으며, 이 광고 내에 'Download' 버튼이 있습니다. 이 버튼은 페이지의 핵심 기능인 '압축된 PDF 다운로드' 버튼과 시각적으로 유사(어두운 배경에 흰색 텍스트)하며, 사용자 시선이 먼저 가는 위치에 있어 사용자가 실제 PDF를 다운로드하려다가 광고를 클릭하게 만들 수 있습니다. 실제 PDF 다운로드 버튼은 그 아래에 파란색으로 작게 위치해 있습니다.",
+        "severity": "HIGH",
+        "user_harm": "사용자가 원하는 PDF 다운로드 대신, 원치 않는 외부 게임 다운로드 페이지로 이동하거나 의도하지 않은 광고 클릭을 유도하여 시간 낭비와 불필요한 짜증을 유발합니다. 이는 사용자의 주요 목표 달성을 방해하고 신뢰도를 저하시킵니다.",
+        "improvement": "광고는 '광고'임을 명확히 표시하고, 핵심 기능 버튼과 혼동되지 않도록 시각적 스타일을 완전히 다르게 디자인해야 합니다. 광고 버튼은 서비스의 주 기능 버튼과 같은 색상이나 형태를 사용하지 않아야 합니다. 또한, 광고의 위치를 사용자의 주요 작업 흐름에서 벗어난 곳(예: 사이드바, 하단)으로 옮기는 것이 좋습니다."
+      },
+      {
+        "type": "urgency",
+        "name": "긴급성 조성 (파일 삭제 알림)",
+        "evidence": "'Your PDF's will be automatically deleted from our server after 30 Mins of compression.'라는 문구가 명시되어 있습니다. 이는 사용자에게 30분 내에 파일을 다운로드해야 한다는 심리적 압박을 가합니다.",
+        "severity": "MEDIUM",
+        "user_harm": "사용자가 충분히 파일을 확인하거나 다른 작업을 처리할 시간적 여유 없이 급하게 다운로드를 하도록 유도합니다. 이는 불필요한 긴박감을 조성하여 사용자의 합리적인 의사결정을 방해하고 전반적인 사용자 경험을 저해할 수 있습니다. (개인정보 보호 측면에서는 긍정적일 수 있으나, 표현 방식이 다크패턴에 해당.)",
+        "improvement": "파일 삭제 정책은 투명하게 알리되, 사용자에게 불필요한 압박을 주지 않는 방향으로 문구를 수정해야 합니다. 예를 들어, '개인정보 보호를 위해, 압축된 PDF 파일은 30분 후 서버에서 자동으로 삭제됩니다. 필요하시면 지금 다운로드해주세요.' 와 같이 정보 전달에 초점을 맞추고 사용자의 선택권을 존중하는 표현을 사용해야 합니다."
+      },
+      {
+        "type": "misdirection",
+        "name": "다른 제품 설치 유도",
+        "evidence": "페이지 하단에 'Donwload Pi7 PDF Compressor For PC'라는 버튼이 크게 위치해 있습니다. 사용자가 웹 기반 PDF 압축 서비스를 이용하고 있는 상황에서, 데스크톱용 압축 소프트웨어 설치를 유도하는 버튼이 메인 콘텐츠 바로 아래에 배치되어 있습니다.",
+        "severity": "LOW",
+        "user_harm": "사용자가 현재 웹 서비스를 통해 파일을 다운로드하는 본래의 목적을 달성한 후, 의도치 않게 PC용 소프트웨어를 설치하도록 유도될 수 있습니다. 이는 사용자의 집중을 분산시키고, 원치 않는 소프트웨어 설치로 이어질 수 있습니다.",
+        "improvement": "데스크톱 소프트웨어 제안은 웹 서비스의 핵심 기능 완료 후 별도의 섹션이나 팝업, 혹은 웹사이트 푸터 등에 명확히 구분하여 제공해야 합니다. 사용자가 자신의 필요에 따라 선택할 수 있도록 정보를 제공하되, 주요 작업 흐름을 방해하지 않아야 합니다."
+      }
+    ],
+    "user_impact": "",
+    "evidence_found": [
+      "페이지 중앙 상단에 'Become the ultimate crime lord'라는 광고 배너가 크게 위치하고 있으며, 이 광고 내에 'Download' 버튼이 있습니다. 이 버튼은 페이지의 핵심 기능인 '압축된 PDF 다운로드' 버튼과 시각적으로 유사(어두운 배경에 흰색 텍스트)하며, 사용자 시선이 먼저 가는 위치에 있어 사용자가 실제 PDF를 다운로드하려다가 광고를 클릭하게 만들 수 있습니다. 실제 PDF 다운로드 버튼은 그 아래에 파란색으로 작게 위치해 있습니다.",
+      "'Your PDF's will be automatically deleted from our server after 30 Mins of compression.'라는 문구가 명시되어 있습니다. 이는 사용자에게 30분 내에 파일을 다운로드해야 한다는 심리적 압박을 가합니다.",
+      "페이지 하단에 'Donwload Pi7 PDF Compressor For PC'라는 버튼이 크게 위치해 있습니다. 사용자가 웹 기반 PDF 압축 서비스를 이용하고 있는 상황에서, 데스크톱용 압축 소프트웨어 설치를 유도하는 버튼이 메인 콘텐츠 바로 아래에 배치되어 있습니다."
+    ]
+  },
+  "stage_results": {
+    "ocr": {
+      "text_extracted": "Pi PDF TOOL Merge PDF's PDF Editor Compress Image Download Compressed PDF Pi7 PDF Tool Become the ultimate crime lord Download 11.43MBKB 2014 Download Delete Your PDF's From Server Your PDF's will be ...",
+      "blocks_count": 16,
+      "success": true
+    },
+    "rule_engine": {
+      "detected": false,
+      "total_score": 0,
+      "detections": []
+    },
+    "llm_verification": {
+      "success": true,
+      "model_used": "gemini-2.5-flash",
+      "error": null
+    }
+  }
+}
