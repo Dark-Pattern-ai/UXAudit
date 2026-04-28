@@ -146,7 +146,7 @@ GPT-4o 결과가 나오면 민아가 아래 기준으로 검수합니다.
 ## 7. 최종 출력 포맷 (labels.jsonl)
 
 ```
-Copy{"file": "img_001.png", "primary_label": 3, "primary_category": "MISLEADING", "secondary_label": null, "confidence": 0.92, "reason": "동의 버튼만 크고 진한 색, 거절 버튼은 배경과 같은 색으로 흐림", "reviewer": "gpt-4o"}
+{"file": "img_001.png", "primary_label": 3, "primary_category": "MISLEADING", "secondary_label": null, "confidence": 0.92, "reason": "동의 버튼만 크고 진한 색, 거절 버튼은 배경과 같은 색으로 흐림", "reviewer": "gpt-4o"}
 {"file": "img_002.png", "primary_label": 0, "primary_category": "NORMAL", "secondary_label": null, "confidence": 0.88, "reason": "일반적인 상품 안내 페이지, 다크패턴 요소 없음", "reviewer": "gpt-4o"}
 {"file": "img_003.png", "primary_label": 12, "primary_category": "PRESSURING", "secondary_label": 4, "confidence": 0.65, "reason": "구독 해지 시 감정적 문구 사용 + 자동갱신 옵션 사전선택", "reviewer": "민아"}
 {"file": "img_004.png", "primary_label": 6, "primary_category": "OBSTRUCTING", "secondary_label": 12, "confidence": 0.78, "reason": "쇼핑몰 구독 해지 메뉴가 설정 깊숙이 숨겨져 있고, 해지 시 혜택 손실 경고 문구 동반", "reviewer": "gpt-4o"}

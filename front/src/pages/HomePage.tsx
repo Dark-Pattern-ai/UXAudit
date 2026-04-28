@@ -105,8 +105,7 @@ const HomePage = () => {
           AI 금융 UX 다크패턴 진단
         </h1>
         <p className="text-gray-500 max-w-xl mx-auto">
-          금융 앱 스크린샷을 업로드하면 AI가 다크패턴을 자동으로 탐지하고,
-          금융위원회 가이드라인 기준에 따른 진단 리포트를 제공합니다.
+          감독기관용 점검 도구
         </p>
       </div>
 

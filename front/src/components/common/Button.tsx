@@ -8,7 +8,7 @@ interface ButtonProps {
 }
 
 const variantStyles = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700',
+  primary: 'bg-green-600 text-white hover:bg-green-700',
   secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
   danger: 'bg-red-500 text-white hover:bg-red-600',
 };

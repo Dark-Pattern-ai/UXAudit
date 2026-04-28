@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import time
 
 # .env에서 API 키 로드
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
@@ -106,7 +107,7 @@ def label_image(image_path):
 # ===== 실행 =====
 if __name__ == "__main__":
     image_folder = Path(__file__).parent / "images"
-    output_file = Path(__file__).parent / "output" / "labels_raw.jsonl"
+    output_file = Path(__file__).parent / "output" / "labels_B4E2.jsonl"
 
     # images 폴더 확인
     image_files = sorted([
@@ -116,6 +117,7 @@ if __name__ == "__main__":
 
     print(f"총 {len(image_files)}장 발견\n")
 
+    # write 모드 
     with open(output_file, "w", encoding="utf-8") as out:
         for i, fname in enumerate(image_files):
             print(f"[{i+1}/{len(image_files)}] {fname} ... ", end="")
@@ -151,5 +153,7 @@ if __name__ == "__main__":
                 }
                 out.write(json.dumps(error_line, ensure_ascii=False) + "\n")
                 print(f"⚠ 오류: {e}")
+
+                time.sleep(5)
 
     print(f"\n완료! 결과 저장: {output_file}")
