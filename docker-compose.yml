@@ -1,6 +1,23 @@
-version: '3.9'
-
 services:
+  postgres:
+    image: postgres:16
+    container_name: uxaudit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: uxaudit
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: uxaudit_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uxaudit -d uxaudit_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - uxaudit-net
 
   frontend:
     build:
@@ -44,11 +61,16 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      DATABASE_URL: postgresql://uxaudit:1234@postgres:5432/uxaudit_db?schema=public
       AI_SERVER_URL: http://ai-server:8000
       USE_MOCK_AI: "false"
     depends_on:
+      postgres:
+        condition: service_healthy
       ai-server:
         condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
     restart: unless-stopped
     networks:
       - uxaudit-net
@@ -83,11 +105,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
     restart: unless-stopped
     networks:
       - uxaudit-net
+    
+  
 
 networks:
   uxaudit-net:
     driver: bridge
+
+volumes:
+  postgres_data:

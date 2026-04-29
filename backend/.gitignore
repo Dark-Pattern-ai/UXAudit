@@ -1,1 +1,27 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# env
 .env
+*.env
+!.env.example
+
+# uploads
+uploads/
+backend/uploads/
+
+# python cache
+__pycache__/
+*.pyc
+
+# zip/backups
+*.zip
+
+# build
+dist/
+build/
+
+# model/cache
+.paddlex/
+**/.paddlex/

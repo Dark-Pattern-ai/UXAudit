@@ -3,17 +3,18 @@
 
 FROM node:20-alpine
 
-# tesseract.js가 내부적으로 사용하는 시스템 패키지 설치
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++
-
 WORKDIR /app
 
+# Prisma가 Alpine에서 동작할 때 필요한 런타임 라이브러리
+RUN apk add --no-cache openssl
+
 # 의존성 먼저 설치 (레이어 캐시 활용 — 코드 변경 시 재설치 방지)
-COPY package.json ./
-RUN npm install --production
+COPY package*.json ./
+RUN npm install
+
+# Prisma schema 먼저 복사 후 Client 생성
+COPY prisma ./prisma
+RUN npx prisma generate
 
 # 소스 복사
 COPY . .
