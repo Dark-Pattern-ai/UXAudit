@@ -1,1 +1,5 @@
 .env
+
+echo "model_training/models/*.pkl" >> .gitignore
+echo "model_training/models/*.pt" >> .gitignore
+echo "model_training/outputs/" >> .gitignore

@@ -1,6 +1,0 @@
-{"file": "fin_TS_nagging_047.jpg", "primary_label": 12, "primary_category": "PRESSURING", "secondary_label": null, "confidence": 0.8, "reason": "감정적 언어 사용으로 사용자의 관심을 끌려는 시도"}
-{"file": "fin_test_exploiting_6.png", "primary_label": 6, "primary_category": "OBSTRUCTING", "secondary_label": null, "confidence": 0.9, "reason": "무료 체험 후 자동 결제 및 해지 절차가 복잡하게 안내되어 취소·해지 방해로 판단됨"}
-{"file": "fin_test_misleading_11.png", "primary_label": 5, "primary_category": "MISLEADING", "secondary_label": null, "confidence": 0.9, "reason": "할인 강조를 통한 기만적 유인행위로 판단됨"}
-{"file": "fin_test_misleading_8.png", "primary_label": 0, "primary_category": "정상", "secondary_label": null, "confidence": 1.0, "reason": "법적 필수 약관 동의 체크박스가 미체크 상태로 제공됨"}
-{"file": "fin_test_presurring_2.png", "primary_label": 14, "primary_category": "PRESSURING", "secondary_label": null, "confidence": 0.9, "reason": "다른 소비자의 활동 알림을 통해 구매 압박을 유도하고 있음"}
-{"file": "정상_구글.png", "primary_label": 0, "primary_category": "NORMAL", "secondary_label": null, "confidence": 1.0, "reason": "가격 및 서비스 옵션이 명확하게 제시되어 있으며, 다크패턴이 보이지 않음"}
