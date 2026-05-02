@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from typing import Dict
 
 # 환경변수 로드 및 Gemini API 설정
-load_dotenv()
+load_dotenv(override=True)
+os.environ.pop("GOOGLE_API_KEY", None)
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def create_analysis_prompt(ocr_text: str, rule_results: Dict) -> str:

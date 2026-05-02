@@ -2,19 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { analyzeImages } from '../services/api';
 
-interface AnalysisReport {
-  id: string;
-  results: any[];
-  totalFiles: number;
-  analyzedAt: string;
-  serviceName?: string;
-}
-
 const STEPS: string[] = [
   '이미지 전처리',
-  'CLIP 임베딩 생성',
+  'OCR 텍스트 추출',
   '다크패턴 분류 모델 추론',
-  '위험도 점수 계산',
+  'LLM 검증',
   '진단 리포트 생성',
 ];
 
@@ -35,56 +27,37 @@ const AnalysisPage = () => {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
-    // window.__pendingFiles에서 파일 가져오기
     const files: File[] = (window as any).__pendingFiles || [];
+    console.log('files:', files);
 
-    if (files.length === 0) {
-      navigate('/');
-      return;
-    }
-
-    // 프로그레스 바 애니메이션 (90%까지만 자동 진행)
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
+        if (prev >= 90) { clearInterval(progressInterval); return 90; }
         return prev + 1;
       });
     }, 50);
 
-    // 스텝 애니메이션
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
-        if (prev >= STEPS.length - 2) {
-          clearInterval(stepInterval);
-          return prev;
-        }
+        if (prev >= STEPS.length - 2) { clearInterval(stepInterval); return prev; }
         return prev + 1;
       });
     }, 800);
 
-    // 실제 API 호출
     analyzeImages(files, (current, total) => {
       console.log(`분석 중: ${current}/${total}`);
     })
-      .then((report: AnalysisReport) => {
+      .then((report) => {
         report.serviceName = state?.serviceName || '분석 서비스';
-
         clearInterval(progressInterval);
         clearInterval(stepInterval);
         setProgress(100);
         setCurrentStep(STEPS.length - 1);
-
-        // window.__pendingFiles 초기화
-        (window as any).__pendingFiles = null;
-
         setTimeout(() => {
           navigate(`/report/${report.id}`, { state: { report } });
         }, 500);
       })
-      .catch((err: Error) => {
+      .catch((err) => {
         clearInterval(progressInterval);
         clearInterval(stepInterval);
         setError(err.message || '분석 중 오류가 발생했습니다.');
@@ -102,8 +75,7 @@ const AnalysisPage = () => {
     return 'waiting';
   };
 
-  const currentLabel =
-    progress >= 100 ? '완료!' : `${STEPS[currentStep]} 중...`;
+  const currentLabel = progress >= 100 ? '완료!' : `${STEPS[currentStep]} 중...`;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
@@ -120,10 +92,7 @@ const AnalysisPage = () => {
         <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
           <p className="text-red-600 text-sm font-medium mb-2">분석 실패</p>
           <p className="text-red-500 text-sm">{error}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-3 text-sm text-blue-600 hover:underline cursor-pointer"
-          >
+          <button onClick={() => navigate('/')} className="mt-3 text-sm text-blue-600 hover:underline cursor-pointer">
             홈으로 돌아가기
           </button>
         </div>
@@ -168,8 +137,7 @@ const AnalysisPage = () => {
                   )}
                   <span className={`text-sm ${
                     status === 'done' ? 'text-green-600' :
-                    status === 'active' ? 'text-yellow-600 font-medium' :
-                    'text-gray-400'
+                    status === 'active' ? 'text-yellow-600 font-medium' : 'text-gray-400'
                   }`}>
                     {step}
                     {status === 'done' && ' 완료'}

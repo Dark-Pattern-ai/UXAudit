@@ -2,19 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { analyzeImages } from '../services/api';
 
-interface AnalysisReport {
-  id: string;
-  results: any[];
-  totalFiles: number;
-  analyzedAt: string;
-  serviceName?: string;
-}
-
 const STEPS: string[] = [
   '이미지 전처리',
-  'CLIP 임베딩 생성',
+  'OCR 텍스트 추출',
   '다크패턴 분류 모델 추론',
-  '위험도 점수 계산',
+  'LLM 검증',
   '진단 리포트 생성',
 ];
 
@@ -24,6 +16,7 @@ const AnalysisPage = () => {
   const state = location.state as {
     serviceName?: string;
     imageCount?: number;
+    files?: File[];
   } | null;
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -35,15 +28,11 @@ const AnalysisPage = () => {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
-    // window.__pendingFiles에서 파일 가져오기
-    const files: File[] = (window as any).__pendingFiles || [];
-
-    if (files.length === 0) {
+    if (!state?.files || state.files.length === 0) {
       navigate('/');
       return;
     }
 
-    // 프로그레스 바 애니메이션 (90%까지만 자동 진행)
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) {
@@ -54,7 +43,6 @@ const AnalysisPage = () => {
       });
     }, 50);
 
-    // 스텝 애니메이션
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
         if (prev >= STEPS.length - 2) {
@@ -65,26 +53,21 @@ const AnalysisPage = () => {
       });
     }, 800);
 
-    // 실제 API 호출
-    analyzeImages(files, (current, total) => {
+    analyzeImages(state.files, (current, total) => {
       console.log(`분석 중: ${current}/${total}`);
     })
-      .then((report: AnalysisReport) => {
-        report.serviceName = state?.serviceName || '분석 서비스';
-
+      .then((report) => {
+        report.serviceName = state.serviceName || '분석 서비스';
         clearInterval(progressInterval);
         clearInterval(stepInterval);
         setProgress(100);
         setCurrentStep(STEPS.length - 1);
 
-        // window.__pendingFiles 초기화
-        (window as any).__pendingFiles = null;
-
         setTimeout(() => {
           navigate(`/report/${report.id}`, { state: { report } });
         }, 500);
       })
-      .catch((err: Error) => {
+      .catch((err) => {
         clearInterval(progressInterval);
         clearInterval(stepInterval);
         setError(err.message || '분석 중 오류가 발생했습니다.');
@@ -112,8 +95,8 @@ const AnalysisPage = () => {
       </h2>
       {state?.imageCount && (
         <p className="text-gray-500 mb-10">
-          {state.imageCount}장의 화면에서 다크패턴을 탐지 중입니다
-        </p>
+          {state.imageCount}장의 화면에서 다크패턴을 탐지중입니다
+                  </p>
       )}
 
       {error && (
@@ -168,8 +151,7 @@ const AnalysisPage = () => {
                   )}
                   <span className={`text-sm ${
                     status === 'done' ? 'text-green-600' :
-                    status === 'active' ? 'text-yellow-600 font-medium' :
-                    'text-gray-400'
+                    status === 'active' ? 'text-yellow-600 font-medium' : 'text-gray-400'
                   }`}>
                     {step}
                     {status === 'done' && ' 완료'}

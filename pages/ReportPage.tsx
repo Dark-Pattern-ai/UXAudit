@@ -33,7 +33,7 @@ const ReportPage = () => {
   const darkPatterns = results.filter((r: any) => r.final_result?.is_dark_pattern);
   const totalDetected = darkPatterns.length;
   const avgScore = results.length > 0
-    ? Math.round(results.reduce((sum: number, r: any) =>
+    ? Math.round(results.reduce((sum: number, r: any) => 
         sum + (r.final_result?.severity_score || 0), 0) / results.length * 33)
     : 0;
 
