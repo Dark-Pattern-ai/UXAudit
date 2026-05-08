@@ -40,3 +40,8 @@ ai-server/results/
 
 # IDE
 .vscode/settings.json
+
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+ai-server/.env
