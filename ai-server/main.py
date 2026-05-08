@@ -11,6 +11,33 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def calculate_ux_risk_score(patterns: list, ml_result: dict) -> float:
+    CATEGORY_WEIGHT = {
+        "EXPLOITING": 1.0,
+        "PRESSURING": 0.8,
+        "MISLEADING": 0.6,
+        "OBSTRUCTING": 0.4,
+        "NORMAL": 0.0
+    }
+    SEVERITY_MULTIPLIER = {
+        "HIGH": 1.5,
+        "MEDIUM": 1.0,
+        "LOW": 0.5,
+        "NONE": 0.0
+    }
+    if not patterns:
+        return 0.0
+    scores = []
+    prob = ml_result.get("dark_probability", 0.0)
+    category = ml_result.get("predicted_category", "NORMAL")
+    weight = CATEGORY_WEIGHT.get(category, 0.0)
+    for pattern in patterns:
+        severity = pattern.get("severity", "LOW")
+        multiplier = SEVERITY_MULTIPLIER.get(severity, 0.5)
+        score = min(prob * weight * multiplier, 1.0)
+        scores.append(score)
+    return round((sum(scores) / len(scores)) * 100, 1) if scores else 0.0
+
 app = FastAPI(
     title="UXAudit Dark Pattern Detection API",
     version="MVP-v1.0"
@@ -44,7 +71,7 @@ async def analyze_image(file: UploadFile = File(...)):
         # 2단계: ML 추론
         ml_result = run_inference(image_bytes, ocr_text)
 
-        # 3단계: LLM 검증 (다크패턴 여부 관계없이 항상 실행)
+        # 3단계: LLM 검증
         rule_results = {
             "has_dark_pattern": ml_result.get("is_dark_pattern", False),
             "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
@@ -80,6 +107,7 @@ async def analyze_image(file: UploadFile = File(...)):
                 "is_dark_pattern": is_dark,
                 "confidence_score": confidence,
                 "overall_severity": severity,
+                "ux_risk_score": calculate_ux_risk_score(patterns, ml_result),
                 "executive_summary": summary,
                 "recommendation": recommendation
             },
@@ -108,7 +136,6 @@ async def analyze_image(file: UploadFile = File(...)):
             }
         }
 
-        # 결과 저장
         local_save = os.path.join(os.path.dirname(__file__), "results")
         os.makedirs(local_save, exist_ok=True)
         save_path = os.path.join(local_save, f"{filename}_{timestamp}.json")

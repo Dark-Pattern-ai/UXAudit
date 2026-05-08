@@ -1,13 +1,11 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Card from '../components/common/Card';
-import { CATEGORY_CONFIG, RISK_LEVEL_CONFIG } from '../constants/patternTypes';
 
 const ReportPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
 
-  // location.state 또는 localStorage에서 리포트 데이터 가져오기
   let report = location.state?.report;
   if (!report && id) {
     const stored = localStorage.getItem(id);
@@ -28,18 +26,32 @@ const ReportPage = () => {
     );
   }
 
-  // API 결과에서 데이터 추출
   const results = report.results || [];
   const darkPatterns = results.filter((r: any) => r.final_result?.is_dark_pattern);
   const totalDetected = darkPatterns.length;
   const avgScore = results.length > 0
-    ? Math.round(results.reduce((sum: number, r: any) =>
-        sum + (r.final_result?.severity_score || 0), 0) / results.length * 33)
+    ? Math.round(
+        results.reduce((sum: number, r: any) =>
+          sum + (r.final_result?.ux_risk_score || 0), 0) / results.length
+      )
     : 0;
+
+  const scoreColor =
+    avgScore >= 81 ? 'text-red-700' :
+    avgScore >= 61 ? 'text-red-500' :
+    avgScore >= 41 ? 'text-orange-500' :
+    avgScore >= 21 ? 'text-yellow-500' :
+    'text-green-500';
+
+  const scoreLabel =
+    avgScore >= 81 ? '🚨 매우위험' :
+    avgScore >= 61 ? '🔴 위험' :
+    avgScore >= 41 ? '🟠 경고' :
+    avgScore >= 21 ? '🟡 주의' :
+    '✅ 안전';
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* 상단 헤더 */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">진단 결과 대시보드</h1>
         <p className="text-sm text-gray-500">
@@ -47,7 +59,6 @@ const ReportPage = () => {
         </p>
       </div>
 
-      {/* 상단 요약 카드 3칸 */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <Card>
           <p className="text-xs text-gray-500 mb-1">탐지된 다크패턴</p>
@@ -55,7 +66,8 @@ const ReportPage = () => {
         </Card>
         <Card>
           <p className="text-xs text-gray-500 mb-1">UX 위험도 점수</p>
-          <p className="text-4xl font-bold text-yellow-500">{avgScore}</p>
+          <p className={`text-4xl font-bold ${scoreColor}`}>{avgScore}</p>
+          <p className="text-xs text-gray-400 mt-1">{scoreLabel}</p>
         </Card>
         <Card>
           <p className="text-xs text-gray-500 mb-1">분석 완료 화면</p>
@@ -63,7 +75,6 @@ const ReportPage = () => {
         </Card>
       </div>
 
-      {/* 종합 소견 */}
       {darkPatterns.length > 0 && (
         <Card className="mb-8">
           <p className="text-sm font-medium text-gray-700 mb-2">종합 소견</p>
@@ -73,7 +84,6 @@ const ReportPage = () => {
         </Card>
       )}
 
-      {/* 탐지된 다크패턴 목록 */}
       <h2 className="text-lg font-bold text-gray-900 mb-4">탐지된 다크패턴 목록</h2>
       {darkPatterns.length === 0 ? (
         <Card>
