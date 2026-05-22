@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────
+
+enum ReportStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ReportCategory {
+  NORMAL
+  MISLEADING
+  OBSTRUCTING
+  PRESSURING
+  EXPLOITING
+}
+
+enum PatternCategory {
+  MISLEADING
+  OBSTRUCTING
+  PRESSURING
+  EXPLOITING
+}
+
+enum RiskLevel {
+  SAFE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DetectedBy {
+  RULE
+  MODEL
+  LLM
+  HYBRID
+}
+
+// ─────────────────────────────────────────
+// FSC 15개 유형 참조 테이블 [추가]
+// ─────────────────────────────────────────
+
+model PatternType {
+  id           Int             @id                   // 1~15 (FSC 유형 번호)
+  code         String          @unique               // "FSC_01" ~ "FSC_15"
+  name         String                                // "허위·과장 광고"
+  category     PatternCategory
+  description  String?
+  fscGuideline String?         @map("fsc_guideline") // 금융위 가이드라인 원문 조항
+  detectable   Boolean         @default(true)        // 정적 스크린샷 탐지 가능 여부
+
+  detectedPatterns DetectedPattern[]
+
+  @@map("pattern_types")
+}
+
+// ─────────────────────────────────────────
+// Report
+// ─────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(uuid())
+  status      ReportStatus @default(PROCESSING)
+  serviceName String       @map("service_name")
+
+  overallCategory  ReportCategory? @map("overall_category")
+  overallRiskLevel RiskLevel?      @map("overall_risk_level")
+  overallRiskScore Int             @default(0) @map("overall_risk_score")
+  totalDetected    Int             @default(0) @map("total_detected")
+  confidence       Float           @default(0)
+  summary          String?
+  suggestionsJson  Json?           @map("suggestions_json")
+  analyzedAt       DateTime?       @map("analyzed_at")
+
+  // 분석 소요 시간 추적 [추가]
+  analysisStartedAt DateTime? @map("analysis_started_at")
+  analysisMs        Int?      @map("analysis_ms")  // 전체 파이프라인 소요 ms
+
+  images           ReportImage[]
+  detectedPatterns DetectedPattern[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("reports")
+}
+
+// ─────────────────────────────────────────
+// ReportImage
+// ─────────────────────────────────────────
+
+model ReportImage {
+  id       String  @id @default(uuid())
+  reportId String  @map("report_id")
+  fileName String  @map("file_name")
+  filePath String  @map("file_path")
+  url      String? // filePath 기반으로 생성되므로 optional 처리 [수정]
+  pageLabel String? @map("page_label")
+  mimeType  String? @map("mime_type")
+  fileSize  Int?    @map("file_size")
+  width     Int?
+  height    Int?
+
+  report           Report            @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  ocrResult        OcrResult?
+  featureVector    FeatureVector?
+  detectedPatterns DetectedPattern[]
+  patternEvidences PatternEvidence[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([reportId])
+  @@map("report_images")
+}
+
+// ─────────────────────────────────────────
+// OcrResult
+// ─────────────────────────────────────────
+
+model OcrResult {
+  id      String @id @default(uuid())
+  imageId String @unique @map("image_id")
+
+  fullText   String? @map("full_text")
+  linesJson  Json?   @map("lines_json")
+  boxesJson  Json?   @map("boxes_json")
+  rawJson    Json?   @map("raw_json")
+  confidence Float   @default(0)
+  success    Boolean @default(false)
+
+  image ReportImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("ocr_results")
+}
+
+// ─────────────────────────────────────────
+// FeatureVector — 28차원 피처 벡터 저장 [추가]
+// ─────────────────────────────────────────
+
+model FeatureVector {
+  id      String @id @default(uuid())
+  imageId String @unique @map("image_id")
+
+  // 텍스트 브랜치 출력 (5차원) — KLUE-RoBERTa / KcELECTRA
+  textProbs      Json @map("text_probs")
+  // 이미지 브랜치 출력 (5차원) — CLIP / SigLIP
+  imageProbs     Json @map("image_probs")
+  // 규칙 기반 점수 (4차원) — patternRules.js
+  ruleScores     Json @map("rule_scores")
+  // OCR 메타데이터 (5차원) — 텍스트 밀도, 신뢰도 등
+  ocrMeta        Json @map("ocr_meta")
+  // 레이아웃 피처 (9차원) — 버튼 크기·위치·색상 대비 등
+  layoutFeatures Json @map("layout_features")
+
+  image ReportImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("feature_vectors")
+}
+
+// ─────────────────────────────────────────
+// DetectedPattern
+// ─────────────────────────────────────────
+
+model DetectedPattern {
+  id       String  @id @default(uuid())
+  reportId String  @map("report_id")
+  imageId  String? @map("image_id")
+
+  category      PatternCategory
+  patternTypeId Int             @map("pattern_type_id") // PatternType.id (FSC 1~15)
+  patternName   String          @map("pattern_name")
+
+  riskLevel  RiskLevel @map("risk_level")
+  riskScore  Int       @default(0) @map("risk_score")
+  confidence Float     @default(0)
+
+  description    String?
+  recommendation String?
+  location       String?
+  evidenceText      String? @map("evidence_text")
+  evidenceBoxesJson Json?   @map("evidence_boxes_json")
+
+  ruleId    String? @map("rule_id")
+  ruleLabel String? @map("rule_label")
+  detectedBy DetectedBy @default(RULE) @map("detected_by")
+
+  report      Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  image       ReportImage?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  patternType PatternType     @relation(fields: [patternTypeId], references: [id]) // [추가] FK 연결
+  evidences   PatternEvidence[] // [추가] 다중 이미지 증거
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([reportId])
+  @@index([imageId])
+  @@index([category])
+  @@index([riskLevel])
+  @@map("detected_patterns")
+}
+
+// ─────────────────────────────────────────
+// PatternEvidence — 다중 이미지 플로우 패턴 증거 [추가]
+// 예: ⑥ 취소·탈퇴 방해처럼 여러 화면에 걸친 패턴
+// ─────────────────────────────────────────
+
+model PatternEvidence {
+  id        String @id @default(uuid())
+  patternId String @map("pattern_id")
+  imageId   String @map("image_id")
+  
+  flowOrder Int    @map("flow_order")    // 플로우 순서 (1, 2, 3...)
+  note      String? // 해당 화면에서의 증거 설명
+
+  pattern DetectedPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  image   ReportImage     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@index([patternId])
+  @@map("pattern_evidences")
+}
+
+// ─────────────────────────────────────────
+// ModelExperiment — 4쌍 비교 실험 결과 저장 [추가]
+// ─────────────────────────────────────────
+
+model ModelExperiment {
+  id         String @id @default(uuid())
+
+  // 실험 구성
+  ocrEngine  String @map("ocr_engine")  // "paddleocr" | "easyocr"
+  textModel  String @map("text_model")  // "klue-roberta" | "kcelectra"
+  imageModel String @map("image_model") // "clip" | "siglip"
+  metaClf    String @map("meta_clf")    // "lr" | "xgboost"
+
+  // 성능 지표
+  precision   Float
+  recall      Float
+  f1Score     Float @map("f1_score")
+  accuracy    Float
+
+  // 실험 조건
+  datasetSize Int     @map("dataset_size")
+  notes       String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("model_experiments")
+}

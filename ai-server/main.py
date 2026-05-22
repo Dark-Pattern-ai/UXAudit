@@ -38,6 +38,7 @@ def calculate_ux_risk_score(patterns: list, ml_result: dict) -> float:
         scores.append(score)
     return round((sum(scores) / len(scores)) * 100, 1) if scores else 0.0
 
+
 app = FastAPI(
     title="UXAudit Dark Pattern Detection API",
     version="MVP-v1.0"
@@ -51,6 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def health_check():
     return {
@@ -58,6 +60,10 @@ def health_check():
         "version": "MVP-v1.0",
         "modules": ["OCR", "Rule Engine", "Gemini LLM", "Report Builder"]
     }
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.post("/analyze")
 async def analyze_image(file: UploadFile = File(...)):
@@ -88,7 +94,6 @@ async def analyze_image(file: UploadFile = File(...)):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = file.filename or "unknown"
 
-        # LLM 결과 파싱
         is_dark = llm_result.get("is_dark_pattern", ml_result.get("is_dark_pattern", False))
         confidence = llm_result.get("confidence", ml_result.get("dark_probability", 0.0))
         patterns = llm_result.get("patterns_detected", [])
@@ -146,6 +151,50 @@ async def analyze_image(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/ai/analyze-image")
+async def analyze_image_for_backend(image: UploadFile = File(...)):
+    try:
+        image_bytes = await image.read()
+
+        # 1단계: OCR
+        ocr_result = extract_text_from_image(image_bytes)
+        ocr_text = ocr_result.get("full_text", "")
+
+        # 2단계: ML 추론
+        ml_result = run_inference(image_bytes, ocr_text)
+
+        # 3단계: LLM 검증
+        rule_results = {
+            "has_dark_pattern": ml_result.get("is_dark_pattern", False),
+            "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
+            "dark_probability": ml_result.get("dark_probability", 0.0),
+            "detections": []
+        }
+
+        llm_result = await verify_with_llm(
+            image_bytes=image_bytes,
+            ocr_text=ocr_text,
+            rule_results=rule_results
+        )
+
+        # 백엔드 스펙에 맞는 응답 반환
+        category = llm_result.get("category",
+                   ml_result.get("predicted_category", "NORMAL"))
+        dark_prob = ml_result.get("dark_probability", 0.0)
+        patterns = llm_result.get("patterns_detected", [])
+        score = calculate_ux_risk_score(patterns, ml_result)
+
+        return {
+            "category": category,
+            "risk_score": int(score),
+            "confidence": round(dark_prob, 2)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
