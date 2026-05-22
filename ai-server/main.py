@@ -179,7 +179,7 @@ async def analyze_image_for_backend(image: UploadFile = File(...)):
             rule_results=rule_results
         )
 
-        # 백엔드 스펙에 맞는 응답 반환
+        # 백엔드가 필요한 전체 결과 반환
         category = llm_result.get("category",
                    ml_result.get("predicted_category", "NORMAL"))
         dark_prob = ml_result.get("dark_probability", 0.0)
@@ -189,7 +189,12 @@ async def analyze_image_for_backend(image: UploadFile = File(...)):
         return {
             "category": category,
             "risk_score": int(score),
-            "confidence": round(dark_prob, 2)
+            "confidence": round(dark_prob, 2),
+            "patterns_detected": patterns,
+            "overall_severity": llm_result.get("overall_severity", "NONE"),
+            "executive_summary": llm_result.get("executive_summary", ""),
+            "recommendation": llm_result.get("recommendation", ""),
+            "ocr_text": ocr_text[:500]
         }
 
     except Exception as e:

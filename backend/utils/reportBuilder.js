@@ -77,93 +77,61 @@ const CATEGORY_META = {
 
 const ALL_CATEGORIES = ['MISLEADING', 'OBSTRUCTING', 'PRESSURING', 'EXPLOITING'];
 
-const RISK_LEVEL_SCORE = {
-  SAFE: 0,
-  MEDIUM: 40,
-  HIGH: 70,
-  CRITICAL: 90,
-};
-
 const RISK_ORDER = ['SAFE', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 function buildReport({ aiResult, ocrResult, imageMeta = null }) {
-  const { category, risk_score, confidence = 1.0 } = aiResult;
+  const {
+    category,
+    risk_score,
+    confidence = 1.0,
+    patterns_detected = [],
+    overall_severity,
+    executive_summary,
+  } = aiResult;
+
   const meta = CATEGORY_META[category] ?? CATEGORY_META['NORMAL'];
+  const geminiPatterns = patterns_detected.filter(p => p && p.name);
 
-  const allMatched = ocrResult.success ? matchRules(ocrResult.text) : [];
+  const detectedPatterns = geminiPatterns.length > 0
+    ? geminiPatterns.map((p, idx) => ({
+        id: idx + 1,
+        category: mapGeminiTypeToCategory(p.type, category),
+        patternName: p.name,
+        riskLevel: p.severity || meta.riskLevel,
+        description: p.evidence || meta.message,
+        recommendation: p.improvement || meta.suggestions[idx] || meta.suggestions[0] || '',
+        location: null,
+        sourceImageId: imageMeta?.id ?? null,
+      }))
+    : (category !== 'NORMAL'
+        ? meta.patterns.map((name, idx) => ({
+            id: idx + 1,
+            category,
+            patternName: name,
+            riskLevel: meta.riskLevel,
+            description: meta.message,
+            recommendation: meta.suggestions[idx] ?? meta.suggestions[0] ?? '',
+            location: null,
+            sourceImageId: imageMeta?.id ?? null,
+          }))
+        : []);
 
-  const sameCategory = allMatched.filter((r) => r.category === category);
-  const crossCategory = allMatched.filter(
-    (r) => r.category !== category && r.category !== 'NORMAL'
-  );
-
-  const weightMap = calcWeightByCategory(allMatched);
-  const ocrBonus = weightMap[category] ?? 0;
-  const baseScore = category === 'NORMAL'
-    ? 0
-    : Math.max(RISK_LEVEL_SCORE[meta.riskLevel], risk_score);
-
-  const overallRiskScore = Math.min(
-    Math.round((baseScore + Math.min(ocrBonus, 30)) * confidence),
-    100
-  );
-
-  const hasCriticalCross = crossCategory.some(
-    (r) => CATEGORY_META[r.category]?.riskLevel === 'CRITICAL'
-  );
-  const finalRiskLevel = hasCriticalCross
-    ? upgradeRiskLevel(meta.riskLevel)
-    : meta.riskLevel;
-
-  const detectedPatterns = [
-    ...(category !== 'NORMAL'
-      ? meta.patterns.map((name, idx) => ({
-          id: idx + 1,
-          category,
-          patternName: name,
-          riskLevel: finalRiskLevel,
-          description: meta.message,
-          recommendation: meta.suggestions[idx] ?? meta.suggestions[0] ?? '',
-          location: null,
-          sourceImageId: imageMeta?.id ?? null,
-        }))
-      : []),
-    ...sameCategory.map((r, idx) => ({
-      id: meta.patterns.length + idx + 1,
-      category: r.category,
-      patternName: r.label,
-      riskLevel: finalRiskLevel,
-      description: r.evidence,
-      recommendation: meta.suggestions[idx] ?? meta.suggestions[0] ?? '',
-      location: null,
-      sourceImageId: imageMeta?.id ?? null,
-      matchedText: r.matchedText,
-    })),
-    ...crossCategory.map((r, idx) => ({
-      id: meta.patterns.length + sameCategory.length + idx + 1,
-      category: r.category,
-      patternName: r.label,
-      riskLevel: CATEGORY_META[r.category]?.riskLevel ?? 'MEDIUM',
-      description: r.evidence,
-      recommendation: CATEGORY_META[r.category]?.suggestions[0] ?? '',
-      location: null,
-      sourceImageId: imageMeta?.id ?? null,
-      matchedText: r.matchedText,
-    })),
-  ];
+  const overallRiskScore = Math.min(Math.round(risk_score * confidence), 100);
+  const finalRiskLevel = overall_severity || meta.riskLevel;
 
   const detectedCategories = new Set(detectedPatterns.map((p) => p.category));
   const guidelineCompliance = ALL_CATEGORIES.map((cat) => ({
     category: cat,
     isCompliant: !detectedCategories.has(cat),
     details: detectedCategories.has(cat)
-      ? `${CATEGORY_META[cat].label} 패턴 탐지됨`
+      ? `${CATEGORY_META[cat]?.label || cat} 패턴 탐지됨`
       : '위반 없음',
   }));
 
-  const summary = detectedPatterns.length > 0
-    ? `해당 화면에서 총 ${detectedPatterns.length}건의 다크패턴이 탐지됐습니다. ${meta.message}`
-    : '다크패턴이 탐지되지 않았습니다.';
+  const summary = executive_summary ||
+    (detectedPatterns.length > 0
+      ? `해당 화면에서 총 ${detectedPatterns.length}건의 다크패턴이 탐지됐습니다. ${meta.message}`
+      : '다크패턴이 탐지되지 않았습니다.');
 
   return {
     category,
@@ -174,10 +142,9 @@ function buildReport({ aiResult, ocrResult, imageMeta = null }) {
     totalDetected: detectedPatterns.length,
     detectedPatterns,
     guidelineCompliance,
-    suggestions: [
-      ...meta.suggestions,
-      ...sameCategory.map((r) => `[${r.id}] ${r.evidence}`),
-    ],
+    suggestions: geminiPatterns.length > 0
+      ? geminiPatterns.map(p => p.improvement || '').filter(Boolean)
+      : meta.suggestions,
     ocr: {
       text: ocrResult.text,
       confidence: ocrResult.confidence,
@@ -188,9 +155,16 @@ function buildReport({ aiResult, ocrResult, imageMeta = null }) {
   };
 }
 
-function upgradeRiskLevel(level) {
-  const idx = RISK_ORDER.indexOf(level);
-  return RISK_ORDER[Math.min(idx + 1, RISK_ORDER.length - 1)];
+function mapGeminiTypeToCategory(type, defaultCategory) {
+  const typeMap = {
+    'urgency': 'PRESSURING',
+    'hidden_cost': 'MISLEADING',
+    'confirm_shaming': 'OBSTRUCTING',
+    'subscription_trap': 'EXPLOITING',
+    'misdirection': 'MISLEADING',
+    'roach_motel': 'OBSTRUCTING',
+  };
+  return typeMap[type] || defaultCategory;
 }
 
 module.exports = { buildReport };
