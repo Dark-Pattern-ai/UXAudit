@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/common/Card';
 
 interface HistoryItem {
   reportId: string;
@@ -11,6 +10,14 @@ interface HistoryItem {
   overallCategory: string;
 }
 
+const riskScoreColor = (score: number) => {
+  if (score <= 20) return 'var(--safe)';
+  if (score <= 40) return '#2563eb';
+  if (score <= 60) return '#d97706';
+  if (score <= 80) return '#ea580c';
+  return 'var(--red)';
+};
+
 const HistoryPage = () => {
   const navigate = useNavigate();
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -20,7 +27,6 @@ const HistoryPage = () => {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        // 최신순 정렬
         parsed.sort((a: HistoryItem, b: HistoryItem) =>
           new Date(b.analyzedAt).getTime() - new Date(a.analyzedAt).getTime()
         );
@@ -37,57 +43,96 @@ const HistoryPage = () => {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">진단 이력</h1>
-        {history.length > 0 && (
-          <button
-            onClick={clearHistory}
-            className="text-sm text-red-500 hover:underline cursor-pointer"
-          >
-            전체 삭제
-          </button>
-        )}
+    <div className="max-w-4xl mx-auto">
+      {/* 헤더 */}
+      <div className="mb-7 pb-5" style={{ borderBottom: '2px solid var(--navy)' }}>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+              style={{ color: 'var(--navy)' }}>
+              UXAudit
+            </p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>진단 이력</h1>
+          </div>
+          {history.length > 0 && (
+            <button onClick={clearHistory}
+              className="text-xs font-medium hover:underline cursor-pointer"
+              style={{ color: 'var(--red)' }}>
+              전체 삭제
+            </button>
+          )}
+        </div>
       </div>
 
       {history.length === 0 ? (
-        <Card>
-          <p className="text-gray-500 text-center py-10">
+        <div className="rounded-lg p-12 text-center"
+          style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             아직 진단 이력이 없습니다. 홈에서 분석을 시작해 보세요.
           </p>
-        </Card>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {history.map((item) => (
+        <div className="space-y-2">
+          {/* 테이블 헤더 */}
+          <div className="grid grid-cols-12 px-5 py-2 text-xs font-semibold uppercase tracking-wide"
+            style={{ color: 'var(--text-secondary)' }}>
+            <span className="col-span-5">서비스명</span>
+            <span className="col-span-4">진단 일시</span>
+            <span className="col-span-1 text-center">탐지</span>
+            <span className="col-span-2 text-center">위험도</span>
+          </div>
+
+          {history.map((item, idx) => (
             <div
               key={item.reportId}
               onClick={() => {
-                // 로컬스토리지에서 전체 리포트 데이터 가져와서 state로 넘김
                 const raw = localStorage.getItem(`uxaudit_report_${item.reportId}`);
                 const reportData = raw ? JSON.parse(raw) : null;
                 navigate(`/report/${item.reportId}`, { state: { report: reportData } });
               }}
-              className="flex items-center justify-between bg-white border border-gray-200
-                         rounded-xl px-5 py-4 cursor-pointer hover:border-blue-300
-                         hover:shadow-sm transition-all"
+              className="grid grid-cols-12 items-center px-5 py-4 rounded-lg cursor-pointer transition-all"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--navy)';
+                (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f5f8ff';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)';
+                (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--surface)';
+              }}
             >
-              <div>
-                <p className="font-medium text-gray-900">
+              <div className="col-span-5 flex items-center gap-3">
+                <span className="text-xs w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: '#eef2f7', color: 'var(--text-secondary)' }}>
+                  {idx + 1}
+                </span>
+                <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>
                   {item.serviceName || '분석 서비스'}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">
+              </div>
+              <div className="col-span-4">
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   {new Date(item.analyzedAt).toLocaleString('ko-KR')}
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-xs text-gray-400">탐지</p>
-                  <p className="font-bold text-red-500">{item.totalDetected}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-400">위험도</p>
-                  <p className="font-bold text-yellow-500">{item.overallRiskScore}</p>
-                </div>
+              <div className="col-span-1 text-center">
+                <span className="text-sm font-bold"
+                  style={{ color: item.totalDetected > 0 ? 'var(--red)' : 'var(--safe)' }}>
+                  {item.totalDetected}
+                </span>
+              </div>
+              <div className="col-span-2 flex justify-center">
+                <span className="text-xs font-bold px-2.5 py-1 rounded"
+                  style={{
+                    backgroundColor: riskScoreColor(item.overallRiskScore) + '18',
+                    color: riskScoreColor(item.overallRiskScore),
+                    border: `1px solid ${riskScoreColor(item.overallRiskScore)}40`,
+                  }}>
+                  {item.overallRiskScore}점
+                </span>
               </div>
             </div>
           ))}

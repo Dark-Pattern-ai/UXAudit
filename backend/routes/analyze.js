@@ -30,35 +30,6 @@ const upload = multer({
 });
 
 /**
- * POST /api/analyze
- * Body: multipart/form-data { image: File }
- * Response: { report: ReportObject }
- */
-router.post('/analyze', upload.single('image'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: '이미지 파일이 필요합니다.' });
-    }
-
-    // USE_MOCK_AI=true 이면 실제 AI 서버 대신 목 응답 사용
-    const aiCall = USE_MOCK
-      ? Promise.resolve(getMockAIResult())
-      : callAIServer(req.file);
-
-    // AI 분류 & OCR 병렬 실행
-    const [aiResult, ocrResult] = await Promise.all([
-      aiCall,
-      extractText(req.file.buffer),
-    ]);
-
-    const report = buildReport({ aiResult, ocrResult });
-    res.json({ report });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
  * 실제 AI 서버 호출
  */
 async function callAIServer(file) {

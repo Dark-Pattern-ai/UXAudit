@@ -6,6 +6,22 @@ import type { PatternCategoryKey, RiskLevel } from '../types';
 
 const API_BASE = 'http://localhost:3000/api';
 
+const riskScoreColor = (score: number) => {
+  if (score <= 20) return 'var(--safe)';
+  if (score <= 40) return '#2563eb';
+  if (score <= 60) return '#d97706';
+  if (score <= 80) return '#ea580c';
+  return 'var(--red)';
+};
+
+const riskScoreLabel = (score: number) => {
+  if (score <= 20) return '안전';
+  if (score <= 40) return '주의';
+  if (score <= 60) return '경고';
+  if (score <= 80) return '위험';
+  return '매우 위험';
+};
+
 const ReportDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,39 +32,35 @@ const ReportDetailPage = () => {
   const [loading, setLoading] = useState(!report);
   const [error, setError] = useState('');
 
- useEffect(() => {
-  if (report) return;
-  if (!id) return;
+  useEffect(() => {
+    if (report) return;
+    if (!id) return;
 
-  // rpt- 로 시작하면 DB가 아닌 로컬스토리지에서 조회
-  if (id.startsWith('rpt-')) {
-    const raw = localStorage.getItem(`uxaudit_report_${id}`);
-    if (raw) {
-      setReport(JSON.parse(raw));
-    } else {
-      setError('리포트를 찾을 수 없습니다.');
-    }
-    setLoading(false);
-    return;
-  }
-
-  fetch(`${API_BASE}/reports/${id}`)
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        setReport(data.report);
+    if (id.startsWith('rpt-')) {
+      const raw = localStorage.getItem(`uxaudit_report_${id}`);
+      if (raw) {
+        setReport(JSON.parse(raw));
       } else {
         setError('리포트를 찾을 수 없습니다.');
       }
-    })
-    .catch(() => setError('리포트를 불러오는 중 오류가 발생했습니다.'))
-    .finally(() => setLoading(false));
-}, [id, report]);
+      setLoading(false);
+      return;
+    }
+
+    fetch(`${API_BASE}/reports/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setReport(data.report);
+        else setError('리포트를 찾을 수 없습니다.');
+      })
+      .catch(() => setError('리포트를 불러오는 중 오류가 발생했습니다.'))
+      .finally(() => setLoading(false));
+  }, [id, report]);
 
   if (loading) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">리포트 불러오는 중...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>리포트 불러오는 중...</p>
       </div>
     );
   }
@@ -56,126 +68,194 @@ const ReportDetailPage = () => {
   if (error || !report) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">{error || '리포트를 찾을 수 없습니다.'}</p>
-        <button
-          onClick={() => navigate('/')}
-          className="mt-4 text-blue-600 hover:underline text-sm cursor-pointer"
-        >
+        <p style={{ color: 'var(--text-secondary)' }}>{error || '리포트를 찾을 수 없습니다.'}</p>
+        <button onClick={() => navigate('/')}
+          className="mt-4 text-sm hover:underline cursor-pointer"
+          style={{ color: 'var(--navy)' }}>
           홈으로 돌아가기
         </button>
       </div>
     );
   }
 
+  const score = report.overallRiskScore ?? 0;
+
   return (
     <div className="max-w-4xl mx-auto">
+
+      {/* 헤더 */}
       <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm text-blue-600 hover:underline mb-3 block cursor-pointer"
-        >
+        <button onClick={() => navigate(-1)}
+          className="text-xs font-medium mb-4 flex items-center gap-1 cursor-pointer hover:underline"
+          style={{ color: 'var(--navy)' }}>
           ← 뒤로가기
         </button>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">진단 결과 대시보드</h1>
-        <p className="text-sm text-gray-500">
-          {report.serviceName || '분석 서비스'} · {new Date(report.analyzedAt).toLocaleString('ko-KR')}
+        <div className="flex items-start justify-between pb-5"
+          style={{ borderBottom: '2px solid var(--navy)' }}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+              style={{ color: 'var(--navy)' }}>
+              진단 결과 보고서
+            </p>
+            <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--text)' }}>
+              {report.serviceName || '분석 서비스'}
+            </h1>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              {new Date(report.analyzedAt).toLocaleString('ko-KR')}
+            </p>
+          </div>
+          {/* 위험도 점수 배지 */}
+          <div className="text-center px-5 py-3 rounded-lg"
+            style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1"
+              style={{ color: 'var(--text-secondary)' }}>위험도</p>
+            <p className="text-3xl font-bold leading-none" style={{ color: riskScoreColor(score) }}>
+              {score}
+            </p>
+            <p className="text-xs font-semibold mt-1" style={{ color: riskScoreColor(score) }}>
+              {riskScoreLabel(score)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3개 지표 */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: '탐지된 다크패턴', value: report.totalDetected, color: report.totalDetected > 0 ? 'var(--red)' : 'var(--safe)' },
+          { label: 'UX 위험도 점수', value: score, color: riskScoreColor(score) },
+          { label: '분석 완료 화면', value: report.uploadedImages?.length ?? 1, color: 'var(--navy)' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-lg p-4"
+            style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <p className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>
+              {label}
+            </p>
+            <p className="text-4xl font-bold" style={{ color }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 가이드라인 준수 현황 */}
+      <Card className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-wide mb-3"
+          style={{ color: 'var(--text-secondary)' }}>
+          가이드라인 준수 현황
         </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card>
-          <p className="text-xs text-gray-500 mb-1">탐지된 다크패턴</p>
-          <p className="text-4xl font-bold text-red-500">{report.totalDetected}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-gray-500 mb-1">UX 위험도 점수</p>
-          <p className="text-4xl font-bold text-yellow-500">{report.overallRiskScore}</p>
-        </Card>
-        <Card>
-          <p className="text-xs text-gray-500 mb-1">분석 완료 화면</p>
-          <p className="text-4xl font-bold text-gray-900">{report.uploadedImages?.length ?? 0}</p>
-        </Card>
-      </div>
-
-      <Card className="mb-8">
-        <p className="text-sm font-medium text-gray-700 mb-3">금융위 가이드라인 준수 현황</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {report.guidelineCompliance?.map((item: any) => {
             const catKey = item.category as PatternCategoryKey;
             const config = CATEGORY_CONFIG[catKey];
             if (!config) return null;
+            const compliant = item.isCompliant;
             return (
-              <div
-                key={item.category}
-                className={`rounded-lg p-3 border ${
-                  item.isCompliant
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-red-200 bg-red-50'
-                }`}
-              >
+              <div key={item.category} className="rounded p-3"
+                style={{
+                  backgroundColor: compliant ? 'var(--safe-bg)' : 'var(--red-light)',
+                  border: `1px solid ${compliant ? 'var(--safe-border)' : '#f5c0b8'}`,
+                }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium" style={{ color: config.color }}>
+                  <span className="text-xs font-semibold" style={{ color: config.color }}>
                     {config.icon} {config.label}
                   </span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    item.isCompliant ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {item.isCompliant ? '준수' : '위반'}
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: compliant ? 'var(--safe)' : 'var(--red)',
+                      color: 'white',
+                      fontSize: '10px',
+                    }}>
+                    {compliant ? '준수' : '위반'}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">{item.details}</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.details}</p>
               </div>
             );
           })}
         </div>
       </Card>
 
-      <Card className="mb-8">
-        <p className="text-sm font-medium text-gray-700 mb-2">종합 소견</p>
-        <p className="text-sm text-gray-600 leading-relaxed">{report.summary}</p>
+      {/* 종합 소견 */}
+      <Card className="mb-6" accent>
+        <p className="text-xs font-semibold uppercase tracking-wide mb-2"
+          style={{ color: 'var(--text-secondary)' }}>
+          종합 소견
+        </p>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{report.summary}</p>
       </Card>
 
-      <h2 className="text-lg font-bold text-gray-900 mb-4">탐지된 다크패턴 목록</h2>
-      <div className="space-y-3">
-        {report.detectedPatterns?.map((pattern: any) => {
-          const catKey = pattern.category as PatternCategoryKey;
-          const riskKey = pattern.riskLevel as RiskLevel;
-          const catConfig = CATEGORY_CONFIG[catKey];
-          const riskConfig = RISK_LEVEL_CONFIG[riskKey];
-          if (!catConfig || !riskConfig) return null;
-          return (
-            <div
-              key={pattern.id}
-              className="bg-white border border-gray-200 rounded-xl px-5 py-4"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: riskConfig.color }}
-                  />
-                  <p className="font-medium text-gray-900">{pattern.patternName}</p>
+      {/* 탐지된 다크패턴 목록 */}
+      {report.detectedPatterns?.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-base font-bold" style={{ color: 'var(--text)' }}>
+              탐지된 다크패턴 목록
+            </h2>
+            <span className="text-xs font-bold px-2 py-0.5 rounded"
+              style={{ backgroundColor: 'var(--red)', color: 'white' }}>
+              {report.detectedPatterns.length}건
+            </span>
+          </div>
+          <div className="space-y-3">
+            {report.detectedPatterns?.map((pattern: any, idx: number) => {
+              const catKey = pattern.category as PatternCategoryKey;
+              const riskKey = pattern.riskLevel as RiskLevel;
+              const catConfig = CATEGORY_CONFIG[catKey];
+              const riskConfig = RISK_LEVEL_CONFIG[riskKey];
+              if (!catConfig || !riskConfig) return null;
+              return (
+                <div key={pattern.id} className="rounded-lg overflow-hidden"
+                  style={{ border: '1px solid var(--border)', borderLeft: `4px solid ${riskConfig.color}` }}>
+                  <div className="px-5 py-4" style={{ backgroundColor: 'var(--surface)' }}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: riskConfig.color, color: 'white' }}>
+                          {idx + 1}
+                        </span>
+                        <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>
+                          {pattern.patternName}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0 ml-3"
+                        style={{ backgroundColor: riskConfig.bgColor, color: riskConfig.color }}>
+                        {riskConfig.label}
+                      </span>
+                    </div>
+                    {pattern.description && (
+                      <p className="text-sm ml-7 mb-2 leading-relaxed"
+                        style={{ color: 'var(--text-secondary)' }}>
+                        {pattern.description}
+                      </p>
+                    )}
+                    {pattern.recommendation && (
+                      <div className="ml-7 mt-2 px-3 py-2 rounded text-sm"
+                        style={{ backgroundColor: '#eef3fb', borderLeft: '3px solid var(--navy)' }}>
+                        <span className="font-semibold text-xs" style={{ color: 'var(--navy)' }}>
+                          개선 방안
+                        </span>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text)' }}>
+                          {pattern.recommendation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span
-                  className="text-xs font-medium px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: riskConfig.bgColor, color: riskConfig.color }}
-                >
-                  {riskConfig.label}
-                </span>
-              </div>
-              {pattern.description && (
-                <p className="text-sm text-gray-500 ml-6 mb-1">{pattern.description}</p>
-              )}
-              {pattern.recommendation && (
-                <p className="text-sm text-blue-500 ml-6">💡 {pattern.recommendation}</p>
-              )}
-              {pattern.matchedText && (
-                <p className="text-xs text-gray-400 ml-6 mt-1">탐지 텍스트: "{pattern.matchedText}"</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {report.detectedPatterns?.length === 0 && (
+        <div className="rounded-lg p-8 text-center"
+          style={{ backgroundColor: 'var(--safe-bg)', border: '1px solid var(--safe-border)' }}>
+          <p className="text-2xl mb-2">✓</p>
+          <p className="font-semibold" style={{ color: 'var(--safe)' }}>다크패턴이 탐지되지 않았습니다</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+            분석한 화면에서 가이드라인 위반 요소가 발견되지 않았습니다.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
