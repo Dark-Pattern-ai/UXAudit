@@ -92,7 +92,7 @@ const HomePage = () => {
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-10 mt-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-3">
-          AI 금융 UX 다크패턴 진단
+          AI UX 다크패턴 진단
         </h1>
         <p className="text-gray-500 max-w-xl mx-auto">
           감독기관용 점검 도구
