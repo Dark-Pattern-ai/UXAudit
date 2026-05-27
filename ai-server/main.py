@@ -69,6 +69,8 @@ def health():
 async def analyze_image(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
+        filename = file.filename or "unknown"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # 1단계: OCR
         ocr_result = extract_text_from_image(image_bytes)
@@ -76,70 +78,109 @@ async def analyze_image(file: UploadFile = File(...)):
 
         # 2단계: ML 추론
         ml_result = run_inference(image_bytes, ocr_text)
+        is_dark_ml = ml_result.get("is_dark_pattern", False)
 
-        # 3단계: LLM 검증
-        rule_results = {
-            "has_dark_pattern": ml_result.get("is_dark_pattern", False),
-            "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
-            "dark_probability": ml_result.get("dark_probability", 0.0),
-            "detections": []
-        }
-
-        llm_result = await verify_with_llm(
-            image_bytes=image_bytes,
-            ocr_text=ocr_text,
-            rule_results=rule_results
-        )
-
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = file.filename or "unknown"
-
-        is_dark = llm_result.get("is_dark_pattern", ml_result.get("is_dark_pattern", False))
-        confidence = llm_result.get("confidence", ml_result.get("dark_probability", 0.0))
-        patterns = llm_result.get("patterns_detected", [])
-        severity = llm_result.get("overall_severity", "NONE")
-        summary = llm_result.get("executive_summary", "분석 완료")
-        recommendation = llm_result.get("recommendation", "")
-
-        result = {
-            "metadata": {
-                "filename": filename,
-                "analyzed_at": datetime.now().isoformat(),
-                "pipeline_version": "MVP-v1.0",
-                "stages_used": ["OCR", "ML-Inference", "LLM-Verification"]
-            },
-            "final_result": {
-                "is_dark_pattern": is_dark,
-                "confidence_score": confidence,
-                "overall_severity": severity,
-                "ux_risk_score": calculate_ux_risk_score(patterns, ml_result),
-                "executive_summary": summary,
-                "recommendation": recommendation
-            },
-            "detailed_analysis": {
-                "patterns_detected": patterns,
-                "user_impact": summary,
-                "evidence_found": [p.get("evidence", "") for p in patterns]
-            },
-            "stage_results": {
-                "ocr": {
-                    "text_extracted": ocr_text[:500],
-                    "blocks_count": ocr_result.get("total_blocks", 0),
-                    "success": True
+        # 3단계: ML이 정상 판정 시 LLM 호출 없이 종료
+        if not is_dark_ml:
+            result = {
+                "metadata": {
+                    "filename": filename,
+                    "analyzed_at": datetime.now().isoformat(),
+                    "pipeline_version": "MVP-v1.0",
+                    "stages_used": ["OCR", "ML-Inference"]
                 },
-                "ml_inference": {
-                    "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
-                    "dark_probability": ml_result.get("dark_probability", 0.0),
-                    "is_dark_pattern": ml_result.get("is_dark_pattern", False),
-                    "success": True
+                "final_result": {
+                    "is_dark_pattern": False,
+                    "confidence_score": round(1 - ml_result.get("dark_probability", 0.0), 4),
+                    "overall_severity": "NONE",
+                    "ux_risk_score": 0.0,
+                    "executive_summary": "ML 분석 결과 다크패턴이 탐지되지 않았습니다.",
+                    "recommendation": ""
                 },
-                "llm_verification": {
-                    "success": "error" not in llm_result,
-                    "model_used": llm_result.get("model_used", "gemini-2.5-flash"),
-                    "error": llm_result.get("error", None)
+                "detailed_analysis": {
+                    "patterns_detected": [],
+                    "user_impact": "",
+                    "evidence_found": []
+                },
+                "stage_results": {
+                    "ocr": {
+                        "text_extracted": ocr_text[:500],
+                        "blocks_count": ocr_result.get("total_blocks", 0),
+                        "success": True
+                    },
+                    "ml_inference": {
+                        "predicted_category": ml_result.get("predicted_category", "NORMAL"),
+                        "dark_probability": ml_result.get("dark_probability", 0.0),
+                        "is_dark_pattern": False,
+                        "success": True
+                    },
+                    "llm_verification": {
+                        "success": False,
+                        "model_used": None,
+                        "error": "ML 정상 판정으로 LLM 호출 생략"
+                    }
                 }
             }
-        }
+        else:
+            # 3단계: ML이 다크패턴 탐지 시 LLM 호출
+            rule_results = {
+                "has_dark_pattern": True,
+                "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
+                "dark_probability": ml_result.get("dark_probability", 0.0),
+                "detections": []
+            }
+            llm_result = await verify_with_llm(
+                image_bytes=image_bytes,
+                ocr_text=ocr_text,
+                rule_results=rule_results
+            )
+
+            is_dark = llm_result.get("is_dark_pattern", True)
+            confidence = llm_result.get("confidence", ml_result.get("dark_probability", 0.0))
+            patterns = llm_result.get("patterns_detected", [])
+            severity = llm_result.get("overall_severity", "NONE")
+            summary = llm_result.get("executive_summary", "분석 완료")
+            recommendation = llm_result.get("recommendation", "")
+
+            result = {
+                "metadata": {
+                    "filename": filename,
+                    "analyzed_at": datetime.now().isoformat(),
+                    "pipeline_version": "MVP-v1.0",
+                    "stages_used": ["OCR", "ML-Inference", "LLM-Verification"]
+                },
+                "final_result": {
+                    "is_dark_pattern": is_dark,
+                    "confidence_score": confidence,
+                    "overall_severity": severity,
+                    "ux_risk_score": calculate_ux_risk_score(patterns, ml_result),
+                    "executive_summary": summary,
+                    "recommendation": recommendation
+                },
+                "detailed_analysis": {
+                    "patterns_detected": patterns,
+                    "user_impact": summary,
+                    "evidence_found": [p.get("evidence", "") for p in patterns]
+                },
+                "stage_results": {
+                    "ocr": {
+                        "text_extracted": ocr_text[:500],
+                        "blocks_count": ocr_result.get("total_blocks", 0),
+                        "success": True
+                    },
+                    "ml_inference": {
+                        "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
+                        "dark_probability": ml_result.get("dark_probability", 0.0),
+                        "is_dark_pattern": True,
+                        "success": True
+                    },
+                    "llm_verification": {
+                        "success": "error" not in llm_result,
+                        "model_used": llm_result.get("model_used", "gemini-2.5-flash"),
+                        "error": llm_result.get("error", None)
+                    }
+                }
+            }
 
         local_save = os.path.join(os.path.dirname(__file__), "results")
         os.makedirs(local_save, exist_ok=True)
@@ -164,24 +205,36 @@ async def analyze_image_for_backend(image: UploadFile = File(...)):
 
         # 2단계: ML 추론
         ml_result = run_inference(image_bytes, ocr_text)
+        is_dark_ml = ml_result.get("is_dark_pattern", False)
 
-        # 3단계: LLM 검증
+        # 3단계: ML이 정상 판정 시 LLM 호출 없이 종료
+        if not is_dark_ml:
+            return {
+                "category": "NORMAL",
+                "risk_score": 0,
+                "confidence": round(1 - ml_result.get("dark_probability", 0.0), 2),
+                "patterns_detected": [],
+                "overall_severity": "NONE",
+                "executive_summary": "ML 분석 결과 다크패턴이 탐지되지 않았습니다.",
+                "recommendation": "",
+                "ocr_text": ocr_text[:500],
+                "llm_skipped": True
+            }
+
+        # 3단계: ML이 다크패턴 탐지 시 LLM 호출
         rule_results = {
-            "has_dark_pattern": ml_result.get("is_dark_pattern", False),
+            "has_dark_pattern": True,
             "predicted_category": ml_result.get("predicted_category", "UNKNOWN"),
             "dark_probability": ml_result.get("dark_probability", 0.0),
             "detections": []
         }
-
         llm_result = await verify_with_llm(
             image_bytes=image_bytes,
             ocr_text=ocr_text,
             rule_results=rule_results
         )
 
-        # 백엔드가 필요한 전체 결과 반환
-        category = llm_result.get("category",
-                   ml_result.get("predicted_category", "NORMAL"))
+        category = llm_result.get("category", ml_result.get("predicted_category", "NORMAL"))
         dark_prob = ml_result.get("dark_probability", 0.0)
         patterns = llm_result.get("patterns_detected", [])
         score = calculate_ux_risk_score(patterns, ml_result)
@@ -194,7 +247,8 @@ async def analyze_image_for_backend(image: UploadFile = File(...)):
             "overall_severity": llm_result.get("overall_severity", "NONE"),
             "executive_summary": llm_result.get("executive_summary", ""),
             "recommendation": llm_result.get("recommendation", ""),
-            "ocr_text": ocr_text[:500]
+            "ocr_text": ocr_text[:500],
+            "llm_skipped": False
         }
 
     except Exception as e:
