@@ -120,7 +120,10 @@ async def verify_with_llm(image_bytes: bytes, ocr_text: str, rule_results: Dict)
                         mime_type='image/png'
                     ),
                     create_analysis_prompt(ocr_text, rule_results)
-                ]
+                ],
+                config=types.GenerateContentConfig(
+                    temperature=0, 
+                )
             )
 
             content = response.text.strip()

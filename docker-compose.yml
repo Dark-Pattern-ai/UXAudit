@@ -38,8 +38,8 @@ services:
              "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 180s
+      retries: 10
+      start_period: 600s
 
   backend:
     build:
@@ -58,7 +58,7 @@ services:
       postgres:
         condition: service_healthy
       ai-server:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     networks:
       - uxaudit-net
