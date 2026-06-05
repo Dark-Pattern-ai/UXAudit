@@ -57,9 +57,30 @@ export async function analyzeImage(file: File): Promise<AIAnalyzeResponse> {
   return response.data;
 }
 
+/** 첫 번째 이미지를 소형 썸네일 base64로 변환 */
+async function fileToThumbnail(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 80;
+      const ratio = Math.min(maxSize / img.width, maxSize / img.height);
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.5));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+    img.src = url;
+  });
+}
+
 /** 여러 장 분석 (순차 호출 후 결과 병합) */
 export async function analyzeImages(
   files: File[],
+  serviceName: string = '',
   onProgress?: (current: number, total: number) => void
 ) {
   const results: AIAnalyzeResponse[] = [];
@@ -71,15 +92,20 @@ export async function analyzeImages(
   }
 
   const merged = mergeReports(results, files);
+  merged.serviceName = serviceName || '분석 서비스';
+
+  // 썸네일 생성 (첫 번째 이미지 기준)
+  const thumbnailUrl = files.length > 0 ? await fileToThumbnail(files[0]) : '';
 
   // 병합된 리포트를 히스토리에 저장
   const historyItem = {
     reportId: merged.id,
     analyzedAt: merged.analyzedAt,
-    serviceName: merged.serviceName || '분석 서비스',
+    serviceName: merged.serviceName,
     totalDetected: merged.totalDetected,
     overallRiskScore: merged.overallRiskScore,
     overallCategory: merged.detectedPatterns[0]?.category || 'NORMAL',
+    thumbnailUrl,
   };
   const raw = localStorage.getItem('uxaudit_history');
   const history = raw ? JSON.parse(raw) : [];

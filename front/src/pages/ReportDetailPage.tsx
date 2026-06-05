@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/common/Card';
 import { CATEGORY_CONFIG, RISK_LEVEL_CONFIG } from '../constants/patternTypes';
@@ -26,11 +26,56 @@ const ReportDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const reportRef = useRef<HTMLDivElement>(null);
   const [report, setReport] = useState<any>(
     (location.state as { report?: any })?.report || null
   );
   const [loading, setLoading] = useState(!report);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
+
+  const exportPDF = async () => {
+    if (!reportRef.current || !report) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#eef2f7',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * pageW) / canvas.width;
+
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+
+      const date = new Date().toLocaleDateString('ko-KR').replace(/\. /g, '').replace('.', '');
+      const name = (report.serviceName || '분석서비스').replace(/\s/g, '_');
+      pdf.save(`${name}_진단보고서_${date}.pdf`);
+    } catch (e) {
+      console.error('PDF 생성 실패:', e);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (report) return;
@@ -83,13 +128,44 @@ const ReportDetailPage = () => {
   return (
     <div className="max-w-4xl mx-auto">
 
-      {/* 헤더 */}
-      <div className="mb-8">
+      {/* 뒤로가기 + PDF 버튼 (PDF에 포함 안 됨) */}
+      <div className="flex items-center justify-between mb-4">
         <button onClick={() => navigate(-1)}
-          className="text-xs font-medium mb-4 flex items-center gap-1 cursor-pointer hover:underline"
+          className="text-xs font-medium flex items-center gap-1 cursor-pointer hover:underline"
           style={{ color: 'var(--navy)' }}>
           ← 뒤로가기
         </button>
+        <button
+          onClick={exportPDF}
+          disabled={exporting}
+          className="flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+          style={{ backgroundColor: 'var(--navy)', color: 'white' }}
+          onMouseEnter={(e) => { if (!exporting) (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--navy-hover)'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--navy)'; }}
+        >
+          {exporting ? (
+            <>
+              <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              생성 중...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              PDF 저장
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* PDF 캡처 영역 */}
+      <div ref={reportRef}>
+
+      {/* 헤더 */}
+      <div className="mb-8">
+        <div className="mb-4" />
         <div className="flex items-start justify-between pb-5"
           style={{ borderBottom: '2px solid var(--navy)' }}>
           <div>
@@ -256,6 +332,8 @@ const ReportDetailPage = () => {
           </p>
         </div>
       )}
+
+      </div>{/* /reportRef */}
     </div>
   );
 };

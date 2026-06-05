@@ -66,11 +66,10 @@ const AnalysisPage = () => {
     }, 800);
 
     // 실제 API 호출
-    analyzeImages(files, (current, total) => {
+    analyzeImages(files, state?.serviceName || '', (current, total) => {
       console.log(`분석 중: ${current}/${total}`);
     })
       .then((report: AnalysisReport) => {
-        report.serviceName = state?.serviceName || '분석 서비스';
 
         clearInterval(progressInterval);
         clearInterval(stepInterval);

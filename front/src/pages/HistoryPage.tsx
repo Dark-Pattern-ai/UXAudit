@@ -8,6 +8,7 @@ interface HistoryItem {
   totalDetected: number;
   overallRiskScore: number;
   overallCategory: string;
+  thumbnailUrl?: string;
 }
 
 const riskScoreColor = (score: number) => {
@@ -38,8 +39,19 @@ const HistoryPage = () => {
   }, []);
 
   const clearHistory = () => {
+    history.forEach((item) => {
+      localStorage.removeItem(`uxaudit_report_${item.reportId}`);
+    });
     localStorage.removeItem('uxaudit_history');
     setHistory([]);
+  };
+
+  const deleteItem = (reportId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = history.filter((item) => item.reportId !== reportId);
+    localStorage.removeItem(`uxaudit_report_${reportId}`);
+    localStorage.setItem('uxaudit_history', JSON.stringify(updated));
+    setHistory(updated);
   };
 
   return (
@@ -74,15 +86,16 @@ const HistoryPage = () => {
       ) : (
         <div className="space-y-2">
           {/* 테이블 헤더 */}
-          <div className="grid grid-cols-12 px-5 py-2 text-xs font-semibold uppercase tracking-wide"
+          <div className="grid grid-cols-12 px-4 py-2 text-xs font-semibold uppercase tracking-wide"
             style={{ color: 'var(--text-secondary)' }}>
             <span className="col-span-5">서비스명</span>
-            <span className="col-span-4">진단 일시</span>
+            <span className="col-span-3">진단 일시</span>
             <span className="col-span-1 text-center">탐지</span>
             <span className="col-span-2 text-center">위험도</span>
+            <span className="col-span-1"></span>
           </div>
 
-          {history.map((item, idx) => (
+          {history.map((item) => (
             <div
               key={item.reportId}
               onClick={() => {
@@ -90,7 +103,7 @@ const HistoryPage = () => {
                 const reportData = raw ? JSON.parse(raw) : null;
                 navigate(`/report/${item.reportId}`, { state: { report: reportData } });
               }}
-              className="grid grid-cols-12 items-center px-5 py-4 rounded-lg cursor-pointer transition-all"
+              className="grid grid-cols-12 items-center px-4 py-3 rounded-lg cursor-pointer transition-all"
               style={{
                 backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
@@ -104,26 +117,42 @@ const HistoryPage = () => {
                 (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--surface)';
               }}
             >
+              {/* 썸네일 + 서비스명 */}
               <div className="col-span-5 flex items-center gap-3">
-                <span className="text-xs w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: '#eef2f7', color: 'var(--text-secondary)' }}>
-                  {idx + 1}
-                </span>
-                <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>
+                {item.thumbnailUrl ? (
+                  <img
+                    src={item.thumbnailUrl}
+                    alt="thumbnail"
+                    className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    style={{ border: '1px solid var(--border)' }}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0 text-xs font-semibold"
+                    style={{ backgroundColor: '#eef2f7', color: 'var(--text-secondary)' }}>
+                    —
+                  </div>
+                )}
+                <p className="font-semibold text-sm truncate" style={{ color: 'var(--text)' }}>
                   {item.serviceName || '분석 서비스'}
                 </p>
               </div>
-              <div className="col-span-4">
+
+              {/* 진단 일시 */}
+              <div className="col-span-3">
                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   {new Date(item.analyzedAt).toLocaleString('ko-KR')}
                 </p>
               </div>
+
+              {/* 탐지 수 */}
               <div className="col-span-1 text-center">
                 <span className="text-sm font-bold"
                   style={{ color: item.totalDetected > 0 ? 'var(--red)' : 'var(--safe)' }}>
                   {item.totalDetected}
                 </span>
               </div>
+
+              {/* 위험도 */}
               <div className="col-span-2 flex justify-center">
                 <span className="text-xs font-bold px-2.5 py-1 rounded"
                   style={{
@@ -133,6 +162,26 @@ const HistoryPage = () => {
                   }}>
                   {item.overallRiskScore}점
                 </span>
+              </div>
+
+              {/* 개별 삭제 */}
+              <div className="col-span-1 flex justify-center">
+                <button
+                  onClick={(e) => deleteItem(item.reportId, e)}
+                  className="w-6 h-6 rounded flex items-center justify-center text-xs transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--red-light)';
+                    (e.currentTarget as HTMLButtonElement).style.color = 'var(--red)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                    (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+                  }}
+                  title="삭제"
+                >
+                  ✕
+                </button>
               </div>
             </div>
           ))}
