@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/common/Card';
 import { CATEGORY_CONFIG, RISK_LEVEL_CONFIG } from '../constants/patternTypes';
+import { loadFromIDB } from '../services/api';
 import type { PatternCategoryKey, RiskLevel } from '../types';
 
 const API_BASE = 'http://localhost:3000/api';
@@ -33,6 +34,25 @@ const ReportDetailPage = () => {
   const [loading, setLoading] = useState(!report);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; label: string } | null>(null);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+
+  // IndexedDB에서 원본 이미지 로드
+  useEffect(() => {
+    if (!report?.uploadedImages?.length) return;
+    (async () => {
+      const urls: Record<string, string> = {};
+      for (const img of report.uploadedImages) {
+        if (img.idbKey) {
+          const url = await loadFromIDB(img.idbKey);
+          if (url) { urls[img.id] = url; continue; }
+        }
+        // IDB에 없으면 blob URL 또는 displayUrl로 fallback
+        urls[img.id] = img.url || img.displayUrl || '';
+      }
+      setImageUrls(urls);
+    })();
+  }, [report]);
 
   const exportPDF = async () => {
     if (!reportRef.current || !report) return;
@@ -194,6 +214,61 @@ const ReportDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 분석 대상 이미지 */}
+      {report.uploadedImages?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: 'var(--text-secondary)' }}>
+            분석 대상 이미지
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {report.uploadedImages.map((img: any) => (
+              <div key={img.id} className="flex-shrink-0 text-center">
+                <img
+                  src={imageUrls[img.id] || img.displayUrl || img.url}
+                  alt={img.fileName}
+                  onClick={() => setLightbox({ src: imageUrls[img.id] || img.displayUrl || img.url, label: img.pageLabel || img.fileName })}
+                  className="h-44 w-auto rounded-lg object-cover cursor-zoom-in transition-opacity hover:opacity-80"
+                  style={{ border: '1px solid var(--border)', maxWidth: '200px' }}
+                />
+                <p className="text-xs mt-1.5 truncate max-w-[200px]"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  {img.pageLabel || img.fileName}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 라이트박스 모달 */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+          onClick={() => setLightbox(null)}
+        >
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute -top-10 right-0 text-white text-sm font-medium hover:opacity-70 cursor-pointer flex items-center gap-1"
+            >
+              ✕ 닫기
+            </button>
+            <img
+              src={lightbox.src}
+              alt={lightbox.label}
+              className="w-full h-auto rounded-lg"
+              style={{ maxHeight: '80vh', objectFit: 'contain' }}
+            />
+            {lightbox.label && (
+              <p className="text-center text-white text-sm mt-3 opacity-70">{lightbox.label}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 3개 지표 */}
       <div className="grid grid-cols-3 gap-3 mb-6">

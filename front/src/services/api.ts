@@ -2,6 +2,48 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:3000/api';
 
+// ── IndexedDB helpers (원본 품질 이미지 저장) ──────────────────────
+const IDB_NAME = 'uxaudit';
+const IDB_STORE = 'images';
+
+function openImageDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveToIDB(key: string, file: File): Promise<void> {
+  try {
+    const db = await openImageDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(file, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    console.warn('[IDB] 저장 실패:', e);
+  }
+}
+
+export async function loadFromIDB(key: string): Promise<string | null> {
+  try {
+    const db = await openImageDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () =>
+        resolve(req.result instanceof Blob ? URL.createObjectURL(req.result) : null);
+      req.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
 /** 이미지 1장 분석 응답 타입 */
 export interface AIAnalyzeResponse {
   report: {
@@ -57,25 +99,30 @@ export async function analyzeImage(file: File): Promise<AIAnalyzeResponse> {
   return response.data;
 }
 
-/** 첫 번째 이미지를 소형 썸네일 base64로 변환 */
-async function fileToThumbnail(file: File): Promise<string> {
+/** 이미지를 base64로 변환하는 공통 함수 */
+function fileToBase64(file: File, maxSize: number, quality: number): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxSize = 80;
       const ratio = Math.min(maxSize / img.width, maxSize / img.height);
       canvas.width = Math.round(img.width * ratio);
       canvas.height = Math.round(img.height * ratio);
       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', 0.5));
+      resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
     img.src = url;
   });
 }
+
+/** 80px 소형 썸네일 (이력 목록용) */
+const fileToThumbnail = (file: File) => fileToBase64(file, 80, 0.5);
+
+/** 480px 중간 해상도 (리포트 본문 표시용) */
+const fileToDisplayImage = (file: File) => fileToBase64(file, 480, 0.75);
 
 /** 여러 장 분석 (순차 호출 후 결과 병합) */
 export async function analyzeImages(
@@ -94,8 +141,18 @@ export async function analyzeImages(
   const merged = mergeReports(results, files);
   merged.serviceName = serviceName || '분석 서비스';
 
-  // 썸네일 생성 (첫 번째 이미지 기준)
+  // 썸네일(이력 목록용) 생성 + 원본 파일을 IndexedDB에 저장
   const thumbnailUrl = files.length > 0 ? await fileToThumbnail(files[0]) : '';
+
+  await Promise.all(
+    files.map((file, i) => saveToIDB(`${merged.id}_img_${i}`, file))
+  );
+
+  // uploadedImages에 idbKey 주입 (원본 조회용)
+  merged.uploadedImages = merged.uploadedImages.map((img, i) => ({
+    ...img,
+    idbKey: `${merged.id}_img_${i}`,
+  }));
 
   // 병합된 리포트를 히스토리에 저장
   const historyItem = {
