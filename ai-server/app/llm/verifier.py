@@ -54,6 +54,9 @@ def create_analysis_prompt(ocr_text: str, rule_results: Dict) -> str:
 - 실재하지 않는 재고 부족·한정 수량으로 긴박감을 조성하는가
 - "지금 사지 않으면 손해", "오늘만 이 가격" 등 공포/손실 회피 마케팅이 있는가
 - 다른 사용자의 구매 행동 알림으로 압박을 주는가 (예: "방금 3명이 구매했습니다")
+- 슬픈 이모티콘, '아쉬워요', '후회할 수도 있어요' 등 감정적 문구로 죄책감이나 압박감을 유발하는가
+- 해지/탈퇴 시 손실을 과도하게 강조하여 사용자 결정을 방해하는가
+
 
 **[편취유도형 – EXPLOITING]**
 - 상품 가격과 배송비를 분리 표시하여 최종 결제액이 처음 가격보다 크게 증가하는가 (Drip Pricing)
@@ -77,6 +80,8 @@ def create_analysis_prompt(ocr_text: str, rule_results: Dict) -> str:
 - roach_motel: 탈출 방해 (가입은 쉽고 해지는 어렵게)
 - fake_social_proof: 가짜 사회적 증거 (조작된 리뷰·구매 알림)
 - trick_question: 혼란스러운 UI 선택 (이중 부정 등)
+- pressuring: 심리적 압박 (혜택 손실 강조, 재고려 유도 문구)
+- emotional_manipulation: 감정 조작 (슬픈 이모티콘, 죄책감 유발 문구, 해지 시 손실 과장)
 
 ## 응답 형식 (반드시 JSON만 출력, 한국어로 작성):
 {{
@@ -108,7 +113,7 @@ async def verify_with_llm(image_bytes: bytes, ocr_text: str, rule_results: Dict)
     Gemini 이미지 분석 및 직접 분석 + 최종 검증
     """
     content = ""
-    max_retries = 3
+    max_retries = 5
 
     for attempt in range(max_retries):
         try:
@@ -134,6 +139,7 @@ async def verify_with_llm(image_bytes: bytes, ocr_text: str, rule_results: Dict)
                 content = content.split("```")[1].split("```")[0].strip()
 
             result = json.loads(content)
+            print(f"[DEBUG] Gemini patterns: {[p.get('type') for p in result.get('patterns_detected', [])]}", flush=True)
             result["model_used"] = "gemini-2.5-flash"
             return result
 
@@ -151,7 +157,7 @@ async def verify_with_llm(image_bytes: bytes, ocr_text: str, rule_results: Dict)
         except Exception as e:
             error_str = str(e)
             if ("429" in error_str or "503" in error_str) and attempt < max_retries - 1:
-                wait_time = (2 ** attempt) * 15
+                wait_time = (2 ** attempt) * 5
                 print(f"[LLM] 429 오류, {wait_time}초 후 재시도.. ({attempt+1}/{max_retries})")
                 time.sleep(wait_time)
                 continue

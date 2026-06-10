@@ -185,6 +185,9 @@ function mapGeminiTypeToCategory(type, defaultCategory) {
     'subscription_trap': 'EXPLOITING',
     'misdirection': 'MISLEADING',
     'roach_motel': 'OBSTRUCTING',
+    'emotional_manipulation': 'PRESSURING',
+    'pressuring': 'PRESSURING',
+    'misleading': 'MISLEADING', 
   };
   return typeMap[type] || defaultCategory;
 }
